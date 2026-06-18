@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MARKETO AI™ — Financial Research Operating System</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060A14;--bg2:#0A0F1E;--panel:#0D1326;--panel2:#121A33;
+  --blue:#0066FF;--cyan:#00C2FF;--gold:#F5B700;--gold2:#FFD54A;
+  --ok:#00D084;--bad:#FF4D5E;--warn:#FFB020;
+  --text:#F1F3FA;--text2:#9AA3C2;--muted:#5C6588;
+  --bdr:rgba(0,140,255,.14);--bdr2:rgba(245,183,0,.22);--bdrcyan:rgba(0,194,255,.25);
+  --fd:'Space Grotesk','Inter',system-ui,sans-serif;--fb:'Inter','Segoe UI',system-ui,sans-serif;
+  --radius:14px;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased;min-height:100vh}
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(0,102,255,.10), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(245,183,0,.07), transparent 55%),
+    var(--bg);
+}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--blue);border-radius:3px}
+
+/* ============ TOPBAR ============ */
+.topbar{height:60px;background:rgba(6,10,20,.92);backdrop-filter:blur(22px) saturate(140%);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px;padding:0 20px;position:sticky;top:0;z-index:500}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--fd);font-size:17px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+.logo .ai{color:var(--gold)}
+.logo-mark{width:30px;height:30px;flex-shrink:0}
+.tnav{display:flex;align-items:center;gap:2px;margin-left:6px}
+.tnav-item{padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid transparent}
+.tnav-item:hover{color:var(--text);background:rgba(0,140,255,.08)}
+.tnav-item.active{color:var(--gold);background:rgba(245,183,0,.08);border-color:var(--bdr2)}
+.gsearch-wrap{flex:1;max-width:440px;margin:0 auto;position:relative}
+.gsearch{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:10px;padding:9px 14px 9px 36px;color:var(--text);font-size:13px;outline:none;font-family:inherit;transition:border-color .2s,background .2s}
+.gsearch:focus{border-color:var(--bdrcyan);background:rgba(255,255,255,.07)}
+.gsearch::placeholder{color:var(--muted)}
+.gsearch-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
+.gsearch-kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;border:1px solid var(--bdr)}
+.gsearch-results{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--panel2);border:1px solid var(--bdrcyan);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden;display:none;z-index:600}
+.gsearch-results.show{display:block}
+.gsr-item{padding:11px 16px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.gsr-item:last-child{border-bottom:none}
+.gsr-item:hover{background:rgba(0,194,255,.07)}
+.gsr-name{font-weight:700;color:var(--text)}
+.gsr-meta{font-size:10.5px;color:var(--muted)}
+.gsr-tag{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(0,194,255,.1);color:var(--cyan)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .18s;font-family:inherit;white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1A1100;box-shadow:0 2px 14px rgba(245,183,0,.25)}
+.btn-gold:hover{filter:brightness(1.08)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:#0052CC}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--bdr)}
+.btn-ghost:hover{background:rgba(0,140,255,.08);color:var(--text);border-color:var(--bdrcyan)}
+.btn-sm{padding:6px 12px;font-size:11.5px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ============ LAYOUT ============ */
+.main{max-width:1500px;margin:0 auto;padding:20px 22px 60px;width:100%}
+.page{display:none}
+.page.active{display:block;animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.pg-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+.pg-title{font-family:var(--fd);font-size:23px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px}
+.pg-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+.pg-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;display:block}
+.disclaimer-strip{font-size:10.5px;color:var(--muted);background:rgba(245,183,0,.05);border:1px solid rgba(245,183,0,.15);border-radius:8px;padding:7px 12px;margin-bottom:18px;display:flex;align-items:center;gap:7px}
+.disclaimer-strip b{color:var(--gold);font-weight:700}
+.card{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--radius);padding:18px;transition:border-color .2s;position:relative}
+.card:hover{border-color:var(--bdrcyan)}
+.card-title{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--text);margin-bottom:13px;display:flex;align-items:center;gap:7px;justify-content:space-between}
+.card-title-l{display:flex;align-items:center;gap:7px}
+.grid{display:grid;gap:16px}
+.g6{grid-template-columns:repeat(6,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.gExecLayout{grid-template-columns:1fr 360px}
+.span2{grid-column:span 2}
+.span3{grid-column:span 3}
+@media(max-width:1200px){.gExecLayout{grid-template-columns:1fr}.g6{grid-template-columns:repeat(3,1fr)}.g5{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.g6,.g5,.g4,.g3,.g2{grid-template-columns:repeat(2,1fr)}.tnav{display:none}}
+
+/* ============ EXEC DASHBOARD ============ */
+.stat-card{background:var(--panel);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.stat-v{font-size:clamp(15px,2.2vw,20px);font-weight:800;font-family:var(--fd);margin-bottom:4px}
+.stat-c{font-size:11.5px;font-weight:600}
+.score-ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.score-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.score-ring-val{font-family:var(--fd);font-weight:800;font-size:17px;z-index:1}
+.sector-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.sector-row:last-child{border-bottom:none}
+.opp-card{background:rgba(255,255,255,.02);border:1px solid var(--bdr);border-radius:10px;padding:11px;cursor:pointer;transition:all .18s}
+.opp-card:hover{border-color:var(--bdrcyan);background:rgba(0,194,255,.04)}
+.opp-name{font-weight:700;font-size:12.5px;color:var(--text)}
+.opp-tag{font-size:10px;color:var(--muted);margin-top:2px}
+.opp-score{font-size:10px;font-weight:700;color:var(--gold);margin-top:6px}
+
+/* ============ TV PANEL ============ */
+.tv-panel{position:sticky;top:76px;display:flex;flex-direction:column;gap:14px}
+.tv-card{background:var(--panel);border:1px solid var(--bdr2);border-radius:14px;overflow:hidden}
+.tv-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.tv-head-title{font-family:var(--fd);font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--bad);box-shadow:0 0 8px var(--bad);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tv-tabs{display:flex;gap:4px;padding:8px 10px;overflow-x:auto;border-bottom:1px solid var(--bdr)}
+.tv-tab{padding:6px 10px;font-size:10.5px;font-weight:700;border-radius:7px;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .15s;border:1px solid transparent}
+.tv-tab:hover{background:rgba(255,255,255,.04)}
+.tv-tab.active{background:rgba(245,183,0,.1);color:var(--gold);border-color:var(--bdr2)}
+.tv-player{aspect-ratio:16/10;background:linear-gradient(145deg,#0A1024,#060A14);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tv-player-bg{position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,102,255,.12),rgba(245,183,0,.08));opacity:.7}
+.tv-player-content{position:relative;z-index:2;text-align:center;padding:16px;animation:tvfade .4s ease}
+@keyframes tvfade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.tv-chan-logo{width:54px;height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:15px;margin:0 auto 10px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.tv-chan-name{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--text)}
+.tv-chan-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+.tv-live-badge{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:5px;background:rgba(255,77,94,.15);border:1px solid rgba(255,77,94,.4);padding:4px 9px;border-radius:6px;font-size:9.5px;font-weight:800;color:var(--bad);z-index:3}
+.tv-controls{position:absolute;bottom:10px;left:10px;right:10px;display:flex;align-items:center;gap:8px;z-index:3}
+.tv-ctrl-btn{width:26px;height:26px;border-radius:7px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text2)}
+.tv-ticker{background:rgba(0,0,0,.35);padding:8px 12px;font-size:10.5px;color:var(--text2);border-top:1px solid rgba(255,255,255,.06)}
+.tv-news-list{padding:10px 12px;display:flex;flex-direction:column;gap:9px;max-height:220px;overflow-y:auto}
+.tv-news-item{display:flex;gap:8px;font-size:11px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tv-news-item:last-child{border-bottom:none;padding-bottom:0}
+.tv-news-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);margin-top:5px;flex-shrink:0}
+.tv-news-t{color:var(--text2);line-height:1.4}
+.tv-news-time{font-size:9.5px;color:var(--muted);margin-top:2px}
+
+/* ============ MASCOT ============ */
+.mascot-dock{position:fixed;bottom:22px;right:22px;z-index:400;display:flex;align-items:flex-end;gap:10px}
+.mascot-bubble{background:var(--panel2);border:1px solid var(--bdrcyan);border-radius:14px;padding:10px 14px;font-size:12px;color:var(--text);max-width:220px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;margin-bottom:8px}
+.mascot-bubble.show{display:block;animation:fadein .3s ease}
+.mascot-wrap{width:64px;height:64px;cursor:pointer;position:relative}
+.mascot-wrap svg{width:100%;height:100%;filter:drop-shadow(0 4px 16px rgba(245,183,0,.35))}
+.mascot-state-label{position:absolute;top:-6px;right:-6px;background:var(--ok);color:#06140C;font-size:8px;font-weight:800;padding:2px 5px;border-radius:5px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ============ RESEARCH DASHBOARD ============ */
+.rsch-header{background:var(--panel);border:1px solid var(--bdrcyan);border-radius:16px;padding:20px;margin-bottom:18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.rsch-logo{width:58px;height:58px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:18px;flex-shrink:0}
+.rsch-name{font-family:var(--fd);font-size:19px;font-weight:700}
+.rsch-sector{font-size:11.5px;color:var(--muted);margin-top:2px}
+.rsch-stats{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap}
+.rsch-stat-l{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.rsch-stat-v{font-size:15px;font-weight:800;font-family:var(--fd);margin-top:2px}
+.rsch-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;border-bottom:1px solid var(--bdr);padding-bottom:0}
+.rsch-tab{padding:9px 16px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.rsch-tab:hover{color:var(--text)}
+.rsch-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.rsch-pane{display:none}
+.rsch-pane.active{display:block;animation:fadein .3s ease}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.score-box{background:var(--panel);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center}
+.score-box-label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.score-box-val{font-size:26px;font-weight:800;font-family:var(--fd)}
+.score-bar-track{height:5px;border-radius:3px;background:rgba(255,255,255,.06);margin-top:8px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px}
+@media(max-width:900px){.score-grid{grid-template-columns:repeat(2,1fr)}}
+.bullet-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.bullet-list li{font-size:12.5px;color:var(--text2);line-height:1.55;padding-left:16px;position:relative}
+.bullet-list li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%}
+.bl-s li::before{background:var(--ok)}
+.bl-w li::before{background:var(--warn)}
+.bl-o li::before{background:var(--cyan)}
+.bl-t li::before{background:var(--bad)}
+.swot-box{border-radius:12px;padding:16px;border:1px solid var(--bdr)}
+.swot-head{font-family:var(--fd);font-size:12px;font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:6px}
+.fin-tbl{width:100%;border-collapse:collapse}
+.fin-tbl th{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bdr);background:var(--panel2)}
+.fin-tbl td{padding:9px 12px;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.04)}
+.fin-tbl tr:last-child td{border-bottom:none}
+.bcg-matrix{position:relative;width:100%;aspect-ratio:1.3/1;background:var(--panel2);border-radius:12px;border:1px solid var(--bdr);overflow:hidden}
+.bcg-quad{position:absolute;width:50%;height:50%;display:flex;align-items:flex-start;justify-content:flex-start;padding:10px;font-size:10px;font-weight:700;color:var(--muted)}
+.bcg-dot{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 6px rgba(245,183,0,.18);transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#1A1100}
+.ceo-card{display:flex;gap:14px;align-items:flex-start}
+.ceo-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:16px;flex-shrink:0}
+.tech-mini-chart{height:90px;background:rgba(0,194,255,.04);border:1px dashed var(--bdrcyan);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);margin-bottom:12px}
+.ind-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.ind-row:last-child{border-bottom:none}
+.tf-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.tf-tab{padding:5px 10px;font-size:10.5px;font-weight:700;border-radius:6px;background:rgba(255,255,255,.04);color:var(--text2);cursor:pointer;border:1px solid transparent}
+.tf-tab.active{background:rgba(0,194,255,.1);color:var(--cyan);border-color:var(--bdrcyan)}
+
+/* ============ OPPORTUNITY DASHBOARD ============ */
+.screen-layout{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start}
+.filter-panel{background:var(--panel);border:1px solid var(--bdr);border-radius:14px;padding:16px;position:sticky;top:76px}
+.fp-title{font-family:var(--fd);font-size:12.5px;font-weight:700;margin-bottom:13px}
+.fgroup{margin-bottom:15px}
+.flabel{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px}
+.frow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.frow label{font-size:10.5px;color:var(--muted);width:46px;flex-shrink:0}
+.finput{background:rgba(255,255,255,.06);border:1px solid var(--bdr);border-radius:6px;padding:6px 9px;color:var(--text);font-size:11.5px;outline:none;width:100%;font-family:inherit}
+.finput:focus{border-color:var(--bdrcyan)}
+.preset{padding:7px 11px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--bdr);background:rgba(255,255,255,.03);color:var(--text2);transition:all .2s;text-align:left;width:100%;margin-bottom:6px;display:block}
+.preset:hover{border-color:var(--bdrcyan);color:var(--text);background:rgba(0,140,255,.06)}
+.stbl{width:100%;border-collapse:collapse}
+.stbl th{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--bdr);background:var(--panel2);white-space:nowrap;cursor:pointer}
+.stbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.stbl tr:hover td{background:rgba(0,140,255,.03)}
+.score-chip{display:inline-flex;align-items:center;justify-content:center;min-width:32px;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:800}
+.tbl-wrap{background:var(--panel);border:1px solid var(--bdr);border-radius:14px;overflow:hidden}
+.opp-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.opp-tab-btn{padding:8px 14px;border-radius:9px;font-size:12px;font-weight:700;background:rgba(255,255,255,.03);border:1px solid var(--bdr);color:var(--text2);cursor:pointer}
+.opp-tab-btn.active{background:rgba(245,183,0,.08);color:var(--gold);border-color:var(--bdr2)}
+
+/* ============ BRAIN ============ */
+.brain-layout{display:grid;grid-template-columns:280px 1fr;gap:16px}
+.brain-side{display:flex;flex-direction:column;gap:14px}
+.brain-cap-list{display:flex;flex-direction:column;gap:8px}
+.brain-cap-item{font-size:11.5px;color:var(--text2);padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--bdr);display:flex;gap:7px;align-items:center}
+.chat-window{background:var(--panel);border:1px solid var(--bdr);border-radius:14px;display:flex;flex-direction:column;height:560px}
+.chat-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.chat-msg{max-width:78%;font-size:13px;line-height:1.6;padding:11px 14px;border-radius:12px}
+.chat-msg.user{align-self:flex-end;background:var(--blue);color:#fff}
+.chat-msg.ai{align-self:flex-start;background:var(--panel2);border:1px solid var(--bdr);color:var(--text2)}
+.chat-msg.ai b{color:var(--text)}
+.chat-input-row{display:flex;gap:8px;padding:14px;border-top:1px solid var(--bdr)}
+.chat-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;outline:none;font-family:inherit}
+.chat-input:focus{border-color:var(--bdrcyan)}
+.chat-suggest{display:flex;gap:7px;flex-wrap:wrap;padding:0 14px 12px}
+.chat-chip{font-size:11px;padding:6px 11px;border-radius:7px;background:rgba(0,194,255,.06);border:1px solid var(--bdrcyan);color:var(--cyan);cursor:pointer}
+.chat-chip:hover{background:rgba(0,194,255,.12)}
+
+/* ============ NEWS ============ */
+.news-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.news-item:last-child{border-bottom:none}
+.news-cat{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:5px;white-space:nowrap;height:fit-content}
+.news-body{flex:1}
+.news-title{font-size:13px;color:var(--text);font-weight:600;line-height:1.4}
+.news-meta{font-size:10.5px;color:var(--muted);margin-top:5px;display:flex;gap:12px}
+.sent-pos{color:var(--ok)}.sent-neg{color:var(--bad)}.sent-neu{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="#" class="logo" onclick="goPage('exec');return false">
+    <svg class="logo-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="15" fill="#0A1842" stroke="#F5B700" stroke-width="1.4"/>
+      <text x="16" y="22" font-family="Space Grotesk,sans-serif" font-size="17" font-weight="800" fill="#F5B700" text-anchor="middle">₹</text>
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#00C2FF" stroke-width=".6" stroke-dasharray="2 3" opacity=".6"/>
+    </svg>
+    MARKETO <span class="ai">AI™</span>
+  </a>
+  <nav class="tnav">
+    <div class="tnav-item active" data-page="exec" onclick="goPage('exec')">Executive</div>
+    <div class="tnav-item" data-page="research" onclick="goPage('research')">Research</div>
+    <div class="tnav-item" data-page="opportunity" onclick="goPage('opportunity')">Opportunity</div>
+    <div class="tnav-item" data-page="brain" onclick="goPage('brain')">Marketo Brain™</div>
+    <div class="tnav-item" data-page="news" onclick="goPage('news')">News</div>
+  </nav>
+  <div class="gsearch-wrap">
+    <span class="gsearch-icon">⌕</span>
+    <input class="gsearch" id="globalSearch" placeholder="Search companies, sectors, themes, CEOs…" autocomplete="off">
+    <span class="gsearch-kbd">⌘K</span>
+    <div class="gsearch-results" id="gsearchResults"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button class="btn btn-ghost btn-sm" onclick="goPage('brain')">🧠 Ask Brain</button>
+    <button class="btn btn-gold btn-sm" onclick="goPage('opportunity')">⚡ Screener</button>
+  </div>
+</header>
+
+<div class="main" id="appMain"></div>
+
+<div class="mascot-dock" id="mascotDock">
+  <div class="mascot-bubble" id="mascotBubble"></div>
+  <div class="mascot-wrap" onclick="mascotClick()" id="mascotWrap"></div>
+</div>
+
+<script>
+/* =====================================================================
+   MOCK DATA LAYER — all illustrative, static, fully offline
+===================================================================== */
+const COMPANIES = {
+INDIAMART:{
+  ticker:'INDIAMART',name:"IndiaMART InterMESH Ltd",sector:'Internet / B2B Marketplace',
+  cmp:'₹2,840',chg:'+1.4%',up:true,mcap:'₹34,200 Cr',pe:'34.2x',logo:'IM',color:'#00C2FF',
+  overview:{
+    business:"India's largest online B2B marketplace connecting buyers and suppliers across industrial, electronics, apparel and services categories.",
+    products:['Marketplace Subscriptions (Silver/Gold/Platinum)','Payment & Logistics Add-ons','Pay-per-lead Listings'],
+    segments:['Industrial Machinery 28%','Electronics & Electrical 19%','Apparel & Textiles 14%','Building & Construction 12%','Others 27%'],
+    geography:'Pan-India, 97% domestic revenue; early-stage exports facilitation pilot.',
+    marketShare:'Category leader in B2B online classifieds with an estimated 60%+ share of organized online B2B listings in India.'
+  },
+  financials:{
+    quarters:[{q:'Q1 FY26',rev:611,profit:142,margin:23.2},{q:'Q4 FY25',rev:582,profit:128,margin:22.0},{q:'Q3 FY25',rev:565,profit:119,margin:21.1},{q:'Q2 FY25',rev:548,profit:108,margin:19.7}],
+    annual:[{y:'FY25',rev:2206,profit:478},{y:'FY24',rev:1196,profit:236},{y:'FY23',rev:1099,profit:191}],
+    ratios:{roe:'24.6%',roce:'29.1%',debt:'Near-zero',margin:'22.1%',cashConv:'High — subscription model, deferred revenue cushion'},
+    balanceSheet:{cash:'₹2,150 Cr',borrowings:'₹0 Cr',networth:'₹2,640 Cr'}
+  },
+  management:{
+    ceo:'Dinesh Agarwal (Co-founder, MD & Group CEO)',
+    team:['Brijesh Agrawal — Co-founder & Director','Anil Saini — CFO'],
+    vision:'Management commentary emphasizes deepening paid supplier penetration, cross-sell of payment/logistics services, and AI-assisted lead matching to improve buyer-supplier conversion.',
+    commentary:'Recent earnings calls highlight steady ARPU growth, improving collection efficiency, and continued investment in trust & safety tooling to reduce spam leads.'
+  },
+  growth:{items:['Expansion of value-added services (payments, logistics) attached to core subscriptions','Pilot programs for export-oriented supplier discovery','Continued investment in AI-based lead scoring and buyer intent matching','Selective tuck-in acquisitions in adjacent B2B tech'],capex:'Asset-light model; capex limited to technology infrastructure and data centers.'},
+  risk:{promoter:'Low — professionally managed, founder-led with stable holding pattern.',debt:'Minimal — net cash balance sheet.',competition:'Moderate — competition from vertical-specific marketplaces and direct social-commerce channels.',sector:'Linked to MSME demand cycles and overall industrial activity.',execution:'Dependent on sustaining supplier renewal rates and controlling lead-quality complaints.'},
+  swot:{
+    s:['Dominant brand recall in Indian B2B search','High operating leverage, asset-light model','Strong net-cash balance sheet','Sticky subscription base with multi-year tenures'],
+    w:['Revenue concentration in subscription renewals','Lead-quality complaints from smaller suppliers','Limited international diversification'],
+    o:['Cross-sell payments & logistics to existing base','AI-driven matching to raise conversion and ARPU','MSME digitization tailwinds in India'],
+    t:['Emergence of low-cost vertical marketplaces','Social commerce platforms disintermediating discovery','Macro slowdown affecting MSME ad spend']
+  },
+  bcg:{quadrant:'Star',marketGrowth:78,relativeShare:72,note:'High share in a growing online B2B discovery market; reinvestment-heavy but cash generative.'},
+  news:[{t:'IndiaMART reports steady subscriber additions in Q1 FY26 update',time:'2h ago',tag:'Results'},{t:'Company highlights AI lead-scoring rollout in investor note',time:'1d ago',tag:'Corporate'},{t:'Analyst note flags ARPU trend as key monitorable for FY26',time:'3d ago',tag:'Coverage'}],
+  scores:{quality:82,growth:71,health:88,management:78,risk:24},
+  technical:{rsi:58,trend:'Above 50 & 200 DMA',support:'₹2,680',resistance:'₹2,960'}
+},
+RELIANCE:{
+  ticker:'RELIANCE',name:'Reliance Industries Ltd',sector:'Conglomerate — Energy, Retail, Telecom',
+  cmp:'₹1,293',chg:'-0.8%',up:false,mcap:'₹17,48,000 Cr',pe:'24.1x',logo:'RI',color:'#00D084',
+  overview:{
+    business:'Diversified conglomerate spanning hydrocarbons & petrochemicals (O2C), digital services (Jio), and organized retail (Reliance Retail).',
+    products:['Refining & Petrochemicals','Jio Telecom & Digital Services','Reliance Retail (grocery, fashion, electronics)','New Energy (solar, hydrogen — early stage)'],
+    segments:['O2C 42%','Retail 23%','Digital Services (Jio) 18%','Oil & Gas 5%','Others 12%'],
+    geography:'Predominantly India; O2C exports to Asia, Europe, and the Americas.',
+    marketShare:'Largest private sector company in India by revenue; market leader in telecom subscriber base and organized retail GMV.'
+  },
+  financials:{
+    quarters:[{q:'Q1 FY26',rev:255000,profit:19200,margin:7.5},{q:'Q4 FY25',rev:248000,profit:18400,margin:7.4},{q:'Q3 FY25',rev:241000,profit:17600,margin:7.3},{q:'Q2 FY25',rev:236000,profit:16900,margin:7.2}],
+    annual:[{y:'FY25',rev:964000,profit:73500},{y:'FY24',rev:902000,profit:69600},{y:'FY23',rev:876000,profit:66700}],
+    ratios:{roe:'9.8%',roce:'11.2%',debt:'Net debt/EBITDA ~0.6x',margin:'7.4%',cashConv:'Moderate — capex-heavy across segments'},
+    balanceSheet:{cash:'₹1,92,000 Cr (consolidated)',borrowings:'₹3,11,000 Cr gross',networth:'₹8,90,000 Cr'}
+  },
+  management:{
+    ceo:'Mukesh Ambani (Chairman & Managing Director)',
+    team:['Isha Ambani — Director, Retail','Akash Ambani — Chairman, Jio Platforms','Nikhil Meswani — Executive Director, O2C'],
+    vision:'Management commentary continues to emphasize the three-pillar growth strategy: O2C cash generation funding Jio and Retail scale-up, alongside new energy investments.',
+    commentary:'Recent earnings calls flag steady ARPU improvement in Jio post tariff revisions, retail footprint rationalization, and continued progress on the Jamnagar new-energy giga complex.'
+  },
+  growth:{items:['New energy giga-factories (solar, battery, hydrogen) under phased commissioning','Jio 5G monetization and FWA (fixed wireless access) scale-up','Retail format rationalization and quick-commerce push (Reliance Retail)','Potential listing/value-unlocking discussions for Jio and Retail entities'],capex:'Among the highest capex programs in corporate India, concentrated in new energy and digital infrastructure.'},
+  risk:{promoter:'Low concentration risk — but high promoter influence on capital allocation decisions.',debt:'Elevated gross debt funding capex cycle; serviceability supported by O2C and Jio cash flows.',competition:'High in telecom (Airtel, Vi) and retail (Amazon, Flipkart, DMart); moderate in O2C given scale advantages.',sector:'Exposed to global refining margins and crude price volatility.',execution:'New energy project timelines and retail format profitability are key monitorables.'},
+  swot:{
+    s:['Scale and vertical integration across O2C','Largest telecom subscriber base via Jio','Extensive organized retail footprint','Strong access to capital markets'],
+    w:['High consolidated debt load','Retail segment margins still maturing','Capital intensity ties up cash for multi-year payback'],
+    o:['New energy transition (solar, hydrogen, batteries)','Jio 5G enterprise & FWA monetization','Potential value unlocking via subsidiary listings'],
+    t:['Global refining margin volatility','Intensifying telecom tariff competition','Regulatory shifts in retail/e-commerce FDI norms']
+  },
+  bcg:{quadrant:'Cash Cow (O2C) / Star (Jio, Retail)',marketGrowth:54,relativeShare:81,note:'O2C generates stable cash; Jio and Retail are higher-growth segments still scaling share.'},
+  news:[{t:'Reliance updates progress on new energy giga complex commissioning',time:'5h ago',tag:'Corporate'},{t:'Jio ARPU trend watched closely ahead of Q2 update',time:'1d ago',tag:'Coverage'},{t:'Retail segment store rationalization continues per filings',time:'2d ago',tag:'Corporate'}],
+  scores:{quality:74,growth:68,health:64,management:79,risk:46},
+  technical:{rsi:46,trend:'Consolidating near 50 DMA',support:'₹1,250',resistance:'₹1,350'}
+},
+TCS:{
+  ticker:'TCS',name:'Tata Consultancy Services Ltd',sector:'IT Services',
+  cmp:'₹3,541',chg:'+0.8%',up:true,mcap:'₹12,82,000 Cr',pe:'30.1x',logo:'TC',color:'#A855F7',
+  overview:{
+    business:'Global IT services, consulting and business solutions provider serving BFSI, retail, manufacturing, and technology clients across 50+ countries.',
+    products:['IT Application & Maintenance Services','Consulting & Enterprise Solutions','BPO Services','TCS BaNCS, ignio, and other proprietary platforms'],
+    segments:['BFSI 30%','Retail & CPG 15%','Manufacturing 9%','Technology & Services 9%','Communications & Media 7%','Others 30%'],
+    geography:'North America 50%, Europe 28%, India & Rest of World 22%.',
+    marketShare:'Largest India-based IT services exporter by revenue; among the top global IT services players by market capitalization.'
+  },
+  financials:{
+    quarters:[{q:'Q1 FY26',rev:62500,profit:12700,margin:20.3},{q:'Q4 FY25',rev:61200,profit:12300,margin:20.1},{q:'Q3 FY25',rev:60100,profit:12100,margin:20.1},{q:'Q2 FY25',rev:59400,profit:11900,margin:20.0}],
+    annual:[{y:'FY25',rev:240900,profit:48100},{y:'FY24',rev:225500,profit:46100},{y:'FY23',rev:225500,profit:42100}],
+    ratios:{roe:'48.2%',roce:'52.4%',debt:'Net cash position',margin:'20.1%',cashConv:'Very High — asset-light services model'},
+    balanceSheet:{cash:'₹52,800 Cr',borrowings:'₹3,200 Cr (lease liabilities)',networth:'₹99,400 Cr'}
+  },
+  management:{
+    ceo:'K Krithivasan (CEO & Managing Director)',
+    team:['N Ganapathy Subramaniam — COO','Samir Seksaria — CFO'],
+    vision:'Management commentary centers on AI-led transformation deals, deal pipeline strength, and disciplined margin management amid discretionary spending softness.',
+    commentary:'Recent earnings calls flag steady deal TCV, cautious commentary on discretionary tech spend in BFSI, and continued investment in GenAI tooling for clients.'
+  },
+  growth:{items:['Scaling GenAI-led service offerings and proprietary AI platforms','Expansion in continental Europe and Middle East geographies','Deepening BFSI and Retail vertical platforms (BaNCS, Optumera)','Selective tuck-in acquisitions in niche digital engineering'],capex:'Low capex intensity; primary investment is in talent, campuses, and platform IP.'},
+  risk:{promoter:'Low — Tata Sons promoter group with long-term stable holding.',debt:'Negligible — net cash balance sheet.',competition:'High — competes with Infosys, Accenture, Cognizant and emerging GenAI-native firms.',sector:'Exposed to discretionary IT spending cycles in US/Europe and currency movements.',execution:'Talent attrition management and large-deal ramp-up timelines are key monitorables.'},
+  swot:{
+    s:['Largest and most diversified client base among Indian IT majors','Strong balance sheet with net cash','High employee retention relative to peers','Deep vertical domain platforms (BaNCS, ignio)'],
+    w:['Revenue growth more muted versus mid-cap IT peers','High dependency on BFSI vertical','Wage inflation pressure on margins'],
+    o:['GenAI-led transformation deal pipeline','Vendor consolidation favoring scaled players','Expansion in continental Europe enterprise accounts'],
+    t:['Discretionary spend slowdown in key geographies','Currency volatility (USD/INR, GBP/INR)','Visa & immigration policy shifts in US/UK']
+  },
+  bcg:{quadrant:'Cash Cow',marketGrowth:38,relativeShare:86,note:'Market leader in a maturing IT services market; high cash generation, moderate growth.'},
+  news:[{t:'TCS wins large multi-year European banking technology deal',time:'4h ago',tag:'Corporate'},{t:'Management commentary flags cautious BFSI discretionary spend',time:'1d ago',tag:'Coverage'},{t:'Company expands GenAI delivery centre footprint',time:'3d ago',tag:'Corporate'}],
+  scores:{quality:88,growth:58,health:91,management:84,risk:20},
+  technical:{rsi:58,trend:'Above 50 & 200 DMA',support:'₹3,420',resistance:'₹3,640'}
+},
+HDFCBANK:{
+  ticker:'HDFCBANK',name:'HDFC Bank Ltd',sector:'Private Sector Banking',
+  cmp:'₹772',chg:'-0.3%',up:false,mcap:'₹11,86,000 Cr',pe:'18.4x',logo:'HB',color:'#FFB020',
+  overview:{
+    business:'Largest private sector bank in India by assets, offering retail, wholesale, and digital banking services post-merger with HDFC Ltd.',
+    products:['Retail Deposits & Loans','Corporate & Wholesale Banking','Credit Cards & Payments','Treasury & Wealth Management'],
+    segments:['Retail Banking 48%','Wholesale Banking 33%','Treasury 12%','Other Banking 7%'],
+    geography:'Pan-India branch network with 8,800+ branches; limited international presence via select overseas branches.',
+    marketShare:'Largest private bank by balance sheet size; among top 3 banks overall in India by deposits and advances.'
+  },
+  financials:{
+    quarters:[{q:'Q1 FY26',rev:75200,profit:16500,margin:21.9},{q:'Q4 FY25',rev:73900,profit:16100,margin:21.8},{q:'Q3 FY25',rev:72500,profit:16700,margin:23.0},{q:'Q2 FY25',rev:71100,profit:16200,margin:22.8}],
+    annual:[{y:'FY25',rev:292700,profit:65400},{y:'FY24',rev:264600,profit:60800},{y:'FY23',rev:177300,profit:44100}],
+    ratios:{roe:'14.8%',roce:'N/A — Banking entity',debt:'N/A — Banking entity',margin:'22.4% (NIM-adjusted)',cashConv:'High — deposit-funded balance sheet'},
+    balanceSheet:{cash:'Statutory reserves per RBI norms',borrowings:'Deposits + borrowings ₹26,80,000 Cr',networth:'₹3,86,000 Cr'}
+  },
+  management:{
+    ceo:'Sashidhar Jagdishan (MD & CEO)',
+    team:['Kaizad Bharucha — Deputy MD','Srinivasan Vaidyanathan — CFO'],
+    vision:'Management commentary focuses on normalizing the loan-to-deposit ratio post HDFC Ltd merger and steadily rebuilding deposit market share.',
+    commentary:'Recent earnings calls highlight progress on branch expansion in semi-urban markets, deposit mobilization momentum, and asset quality stability.'
+  },
+  growth:{items:['Branch network expansion targeting semi-urban and rural markets','Cross-sell of mortgage products following HDFC Ltd merger integration','Scaling digital banking and payments platform','Continued investment in retail liability franchise'],capex:'Moderate — branch network expansion and technology infrastructure investment.'},
+  risk:{promoter:'N/A — widely held institution, no single promoter group.',debt:'N/A — banking entity; monitored via capital adequacy and asset quality instead.',competition:'High — competes with ICICI Bank, Axis Bank, Kotak Mahindra Bank, and SBI.',sector:'Exposed to interest rate cycles, credit growth trends, and regulatory capital norms.',execution:'Post-merger loan-to-deposit ratio normalization and cost synergy realization are key monitorables.'},
+  swot:{
+    s:['Largest private bank deposit franchise','Strong asset quality track record','Wide branch and digital distribution network','Diversified loan book post HDFC Ltd merger'],
+    w:['Elevated loan-to-deposit ratio post-merger','Margin pressure during integration phase','Slower branch productivity ramp-up in new geographies'],
+    o:['Cross-sell mortgage and wealth products to expanded base','Deepen semi-urban and rural deposit franchise','Digital lending and payments expansion'],
+    t:['Rising deposit competition compressing margins','Asset quality sensitivity to macro credit cycles','Regulatory changes in capital and provisioning norms']
+  },
+  bcg:{quadrant:'Star',marketGrowth:61,relativeShare:74,note:'Leading position in a still-growing private banking market, with integration-related reinvestment needs.'},
+  news:[{t:'HDFC Bank reports steady deposit growth in quarterly update',time:'6h ago',tag:'Results'},{t:'Management reiterates loan-to-deposit normalization timeline',time:'1d ago',tag:'Coverage'},{t:'Bank expands branch network in semi-urban markets',time:'4d ago',tag:'Corporate'}],
+  scores:{quality:85,growth:62,health:80,management:82,risk:30},
+  technical:{rsi:49,trend:'Range-bound near 50 DMA',support:'₹740',resistance:'₹810'}
+},
+SBILIFE:{
+  ticker:'SBILIFE',name:'SBI Life Insurance Company Ltd',sector:'Life Insurance',
+  cmp:'₹1,706',chg:'+3.1%',up:true,mcap:'₹1,70,800 Cr',pe:'72.3x',logo:'SL',color:'#00C2FF',
+  overview:{
+    business:'Life insurance provider offering protection, savings, and pension products, distributed via SBI bancassurance, agency, and digital channels.',
+    products:['Protection Plans (Term)','ULIPs','Savings & Endowment Plans','Group & Pension Products'],
+    segments:['Bancassurance (SBI) 55%','Agency Channel 24%','Direct & Digital 12%','Other Channels 9%'],
+    geography:'Pan-India, leveraging the State Bank of India branch network for distribution reach.',
+    marketShare:'Among the top 3 private life insurers in India by new business premium.'
+  },
+  financials:{
+    quarters:[{q:'Q1 FY26',rev:18400,profit:980,margin:5.3},{q:'Q4 FY25',rev:21200,profit:1120,margin:5.3},{q:'Q3 FY25',rev:17800,profit:940,margin:5.3},{q:'Q2 FY25',rev:16900,profit:890,margin:5.3}],
+    annual:[{y:'FY25',rev:74500,profit:3850},{y:'FY24',rev:67200,profit:3460},{y:'FY23',rev:60100,profit:3170}],
+    ratios:{roe:'15.2%',roce:'N/A — Insurance entity',debt:'N/A — Insurance entity',margin:'VNB margin 28.1%',cashConv:'High — float-based insurance economics'},
+    balanceSheet:{cash:'AUM ₹4,15,000 Cr',borrowings:'N/A',networth:'₹13,200 Cr'}
+  },
+  management:{
+    ceo:'Amit Jhingran (MD & CEO)',
+    team:['Manish Kumar — Deputy CEO','Rohini Gade — CFO'],
+    vision:'Management commentary emphasizes protection-mix improvement, agency channel productivity, and maintaining industry-leading VNB margins.',
+    commentary:'Recent earnings calls highlight steady growth in individual new business premium and continued bancassurance channel strength via SBI.'
+  },
+  growth:{items:['Deepening protection product mix to improve VNB margin further','Expanding agency channel productivity initiatives','Scaling digital-first term and savings product distribution','Leveraging SBI YONO platform for cross-sell'],capex:'Low — insurance distribution and technology platform investment.'},
+  risk:{promoter:'Low — State Bank of India remains anchor promoter with stable holding.',debt:'N/A — insurance entity; monitored via solvency ratio instead.',competition:'High — competes with HDFC Life, ICICI Prudential Life, and Max Life.',sector:'Exposed to interest rate cycles affecting ULIP demand and persistency trends.',execution:'Sustaining bancassurance productivity and persistency ratios are key monitorables.'},
+  swot:{
+    s:['Industry-leading VNB margins','Strong bancassurance access via SBI network','Diversified product mix across protection and savings','Consistent persistency ratio improvement'],
+    w:['High revenue dependency on SBI bancassurance channel','Valuation trades at a premium versus some peers','ULIP segment sensitive to equity market sentiment'],
+    o:['Cross-sell via SBI YONO digital platform','Rising protection awareness post-pandemic','Agency channel productivity upside'],
+    t:['Regulatory changes in commission and surrender value norms','Interest rate volatility affecting savings product demand','Intensifying competition from bank-promoted peers']
+  },
+  bcg:{quadrant:'Star',marketGrowth:69,relativeShare:66,note:'High-margin player in a structurally growing life insurance market, scaling protection mix.'},
+  news:[{t:'SBI Life reports VNB margin near record levels for the quarter',time:'3h ago',tag:'Results'},{t:'Company highlights protection mix improvement in investor call',time:'1d ago',tag:'Coverage'},{t:'Bancassurance channel productivity flagged as key driver',time:'5d ago',tag:'Corporate'}],
+  scores:{quality:80,growth:74,health:76,management:81,risk:34},
+  technical:{rsi:64,trend:'Above 50 & 200 DMA',support:'₹1,610',resistance:'₹1,790'}
+}
+};
+
+const SCREENER_UNIVERSE=[
+  {n:'ITC',s:'FMCG',pe:28,roe:28,roce:32,revG:9.2,profitG:11.4,divY:3.2,promHold:0,fiiHold:14.8,quality:84,growth:54,health:90,mgmt:80,risk:18},
+  {n:'POLYCAB',s:'Cables & Wires',pe:34,roe:22,roce:26,revG:18.6,profitG:22.1,divY:0.6,promHold:67.4,fiiHold:18.2,quality:79,growth:78,health:81,mgmt:75,risk:32},
+  {n:'SIEMENS',s:'Capital Goods',pe:62,roe:18,roce:22,revG:14.2,profitG:16.8,divY:0.8,promHold:75.0,fiiHold:9.4,quality:74,growth:62,health:78,mgmt:77,risk:28},
+  {n:'TORNTPOWER',s:'Power',pe:24,roe:16,roce:14,revG:11.4,profitG:9.8,divY:1.1,promHold:72.3,fiiHold:11.6,quality:68,growth:51,health:64,mgmt:70,risk:38},
+  {n:'TRIVENI',s:'Water Treatment',pe:38,roe:24,roce:28,revG:24.1,profitG:28.4,divY:0.4,promHold:53.8,fiiHold:7.2,quality:77,growth:86,health:74,mgmt:72,risk:36},
+  {n:'SBILIFE',s:'Insurance',pe:72,roe:15,roce:0,revG:10.9,profitG:11.3,divY:0.4,promHold:55.4,fiiHold:24.1,quality:80,growth:74,health:76,mgmt:81,risk:34},
+  {n:'ICICIGI',s:'Insurance',pe:38,roe:18,roce:0,revG:13.2,profitG:14.6,divY:0.7,promHold:48.0,fiiHold:21.4,quality:81,growth:69,health:79,mgmt:78,risk:30},
+  {n:'HDFCLIFE',s:'Insurance',pe:82,roe:14,roce:0,revG:9.8,profitG:8.4,divY:0.3,promHold:50.4,fiiHold:27.8,quality:72,growth:58,health:70,mgmt:74,risk:40},
+  {n:'WIPRO',s:'IT Services',pe:26,roe:17,roce:19,revG:3.4,profitG:4.1,divY:1.2,promHold:72.9,fiiHold:6.8,quality:66,growth:38,health:75,mgmt:68,risk:34},
+  {n:'TCS',s:'IT Services',pe:30,roe:48,roce:52,revG:6.8,profitG:8.1,divY:1.5,promHold:71.8,fiiHold:13.2,quality:88,growth:58,health:91,mgmt:84,risk:20},
+  {n:'SHRIRAMFIN',s:'NBFC',pe:14,roe:16,roce:14,revG:16.4,profitG:18.2,divY:1.4,promHold:25.4,fiiHold:48.6,quality:75,growth:71,health:68,mgmt:73,risk:44},
+  {n:'ZENTEC',s:'IT Services',pe:18,roe:22,roce:24,revG:21.2,profitG:24.6,divY:0.8,promHold:39.2,fiiHold:11.4,quality:78,growth:82,health:77,mgmt:71,risk:42},
+  {n:'VGUARD',s:'Consumer Durables',pe:40,roe:18,roce:20,revG:12.8,profitG:14.1,divY:0.5,promHold:48.9,fiiHold:14.6,quality:70,growth:64,health:72,mgmt:69,risk:34},
+  {n:'TATVA',s:'Specialty Chemicals',pe:44,roe:20,roce:18,revG:17.9,profitG:19.4,divY:0.3,promHold:46.8,fiiHold:9.8,quality:74,growth:79,health:69,mgmt:70,risk:46},
+  {n:'GICRE',s:'Reinsurance',pe:12,roe:14,roce:0,revG:6.4,profitG:7.8,divY:2.8,promHold:85.8,fiiHold:4.2,quality:71,growth:42,health:73,mgmt:68,risk:36},
+  {n:'HYUNDAI',s:'Automobiles',pe:22,roe:24,roce:28,revG:9.6,profitG:12.4,divY:1.0,promHold:82.5,fiiHold:8.6,quality:76,growth:61,health:79,mgmt:75,risk:30},
+  {n:'VINDHYATEL',s:'Telecom Equipment',pe:16,roe:28,roce:32,revG:26.4,profitG:31.2,divY:0.6,promHold:31.4,fiiHold:6.2,quality:82,growth:91,health:80,mgmt:74,risk:48},
+  {n:'TIPSFILMS',s:'Media',pe:18,roe:22,roce:24,revG:19.8,profitG:23.4,divY:0.9,promHold:42.6,fiiHold:13.8,quality:74,growth:80,health:75,mgmt:70,risk:44},
+  {n:'PATANJALI',s:'FMCG',pe:46,roe:22,roce:20,revG:14.6,profitG:16.2,divY:0.4,promHold:42.6,fiiHold:5.4,quality:71,growth:68,health:71,mgmt:66,risk:42},
+  {n:'NAVNETEDUL',s:'Education',pe:22,roe:26,roce:28,revG:8.4,profitG:9.6,divY:1.8,promHold:71.2,fiiHold:3.4,quality:73,growth:48,health:78,mgmt:72,risk:32},
+  {n:'INDIAMART',s:'Internet/B2B',pe:34,roe:25,roce:29,revG:18.4,profitG:23.6,divY:1.1,promHold:43.6,fiiHold:32.8,quality:82,growth:71,health:88,mgmt:78,risk:24},
+  {n:'RELIANCE',s:'Conglomerate',pe:24,roe:10,roce:11,revG:6.8,profitG:5.6,divY:0.4,promHold:50.3,fiiHold:22.4,quality:74,growth:68,health:64,mgmt:79,risk:46},
+  {n:'HDFCBANK',s:'Banking',pe:18,roe:15,roce:0,revG:10.6,profitG:7.6,divY:1.2,promHold:0,fiiHold:48.2,quality:85,growth:62,health:80,mgmt:82,risk:30}
+];
+
+const OPPORTUNITY_GROUPS={
+  highGrowth:{label:'High Growth Companies',tickers:['VINDHYATEL','TRIVENI','ZENTEC','TATVA','TIPSFILMS'],note:'Companies showing the strongest revenue and profit growth trajectories in the current screening universe.'},
+  value:{label:'Value Companies',tickers:['GICRE','SHRIRAMFIN','HYUNDAI','TCS'],note:'Companies trading at relatively modest valuation multiples versus their profitability profile.'},
+  momentum:{label:'Momentum Companies',tickers:['VINDHYATEL','POLYCAB','SBILIFE','INDIAMART'],note:'Companies exhibiting strong recent price and earnings momentum relative to sector peers.'},
+  turnaround:{label:'Turnaround Stories',tickers:['TORNTPOWER','WIPRO','PATANJALI'],note:'Companies showing early signs of operational improvement after a period of softer performance.'},
+  sectorLeaders:{label:'Sector Leaders',tickers:['TCS','HDFCBANK','ITC','INDIAMART','SBILIFE'],note:'Companies holding the leading competitive position within their respective sectors.'}
+};
+
+const NEWS_FEED=[
+  {cat:'Breaking',t:'RBI holds repo rate at 6.50%, maintains neutral stance',time:'15m ago',impact:'Market-wide',sentiment:'Neutral'},
+  {cat:'Results',t:'TCS wins large multi-year European banking technology deal',time:'2h ago',impact:'TCS, IT Sector',sentiment:'Positive'},
+  {cat:'FII/DII',t:'FII inflows hit ₹3,842 Cr — largest single-day buying since March',time:'2h ago',impact:'Market-wide',sentiment:'Positive'},
+  {cat:'Corporate Actions',t:'SBI Life VNB margins approach record levels, near 28%',time:'3h ago',impact:'SBILIFE, Insurance',sentiment:'Positive'},
+  {cat:'Sector',t:'IndiaMART highlights AI lead-scoring rollout in investor note',time:'1d ago',impact:'INDIAMART',sentiment:'Positive'},
+  {cat:'Government Policy',t:'Government extends PLI scheme benefits for select manufacturing categories',time:'1d ago',impact:'Manufacturing, Capital Goods',sentiment:'Positive'},
+  {cat:'Bulk Deals',t:'Large block deal reported in HDFC Bank shares on NSE',time:'2d ago',impact:'HDFCBANK',sentiment:'Neutral'},
+  {cat:'Results',t:'Reliance updates progress on new energy giga complex commissioning',time:'2d ago',impact:'RELIANCE',sentiment:'Neutral'}
+];
+
+const TV_CHANNELS=[
+  {id:'cnbc',name:'CNBC TV18',sub:'Business News • Live Markets',color:'#FF4D5E',headline:'Nifty holds above 24,800; buying seen in Banking & IT'},
+  {id:'etnow',name:'ET Now',sub:'Markets & Economy',color:'#00C2FF',headline:'FII flows turn positive for third straight session'},
+  {id:'ndtv',name:'NDTV Profit',sub:'Business Television',color:'#F5B700',headline:'Sector rotation into financials picks up pace'},
+  {id:'bloom',name:'Bloomberg TV',sub:'Global Markets',color:'#1A1A1A',headline:'Asian markets track Wall Street gains overnight'},
+  {id:'yahoo',name:'Yahoo Finance',sub:'Markets Live',color:'#7B0099',headline:'Global investors watch central bank commentary this week'}
+];
+
+let currentTicker='INDIAMART';
+let currentChannel='cnbc';
+let screenerResults=[...SCREENER_UNIVERSE];
+let sortKey=null, sortDir=1;
+
+/* =====================================================================
+   MASCOT — MARKETO RUPEE™
+===================================================================== */
+const MASCOT_STATES={
+  idle:{msg:"How can I help you research today?"},
+  thinking:{msg:"Thinking through that for you…"},
+  researching:{msg:"Pulling together research notes…"},
+  analyzing:{msg:"Analyzing financials and scores…"},
+  speaking:{msg:"Here's what I found."},
+  alert:{msg:"Heads up — new market update available."},
+  success:{msg:"Research summary ready."},
+  celebration:{msg:"Nice! That's a strong Business Quality Score."},
+  sleep:{msg:"Zzz… click me to wake up."}
+};
+let mascotState='idle';
+let mascotClickCount=0;
+
+function mascotSVG(state){
+  const glow = state==='alert' ? '#FF4D5E' : state==='celebration' ? '#00D084' : '#00C2FF';
+  const eyeY = state==='sleep' ? 38 : 30;
+  const bodyBob = (state==='thinking'||state==='researching'||state==='analyzing') ? 'mascot-bob' : '';
+  return `
+  <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="rg" cx="50%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#FFE9A8"/>
+        <stop offset="55%" stop-color="#F5B700"/>
+        <stop offset="100%" stop-color="#B88200"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="32" cy="32" rx="28" ry="28" fill="none" stroke="${glow}" stroke-width="1" stroke-dasharray="3 4" opacity="0.5">
+      <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="8s" repeatCount="indefinite"/>
+    </ellipse>
+    <g class="${bodyBob}">
+      <circle cx="32" cy="30" r="19" fill="url(#rg)"/>
+      <path d="M24 20 h13 a1 1 0 0 1 0 4 h-9 v4 h7 a1 1 0 0 1 0 4 h-7 l9 12 h-5 l-9 -12 h-3 v-4 h3 v-4 h-3 a1 1 0 0 1 0 -4z" fill="#7A4F00" opacity="0.85" transform="translate(2,2) scale(0.62)"/>
+      ${state==='sleep' ?
+        `<line x1="24" y1="${eyeY}" x2="29" y2="${eyeY}" stroke="#08111F" stroke-width="2" stroke-linecap="round"/>
+         <line x1="35" y1="${eyeY}" x2="40" y2="${eyeY}" stroke="#08111F" stroke-width="2" stroke-linecap="round"/>`
+        :
+        `<circle cx="26" cy="${eyeY}" r="3" fill="#08111F"/><circle cx="38" cy="${eyeY}" r="3" fill="#08111F"/>
+         <circle cx="27" cy="${eyeY-1}" r="1" fill="#00E5FF"/><circle cx="39" cy="${eyeY-1}" r="1" fill="#00E5FF"/>`
+      }
+      ${state==='speaking'||state==='celebration' ? `<ellipse cx="32" cy="38" rx="5" ry="3" fill="#08111F" opacity="0.7"/>` : `<path d="M27 38 q5 4 10 0" stroke="#08111F" stroke-width="2" fill="none" stroke-linecap="round"/>`}
+    </g>
+    <path d="M10 36 q-6 -2 -8 -10 q6 0 9 6z" fill="#00C2FF" opacity="0.55"/>
+    <path d="M54 36 q6 -2 8 -10 q-6 0 -9 6z" fill="#00C2FF" opacity="0.55"/>
+  </svg>`;
+}
+function renderMascot(){
+  document.getElementById('mascotWrap').innerHTML = mascotSVG(mascotState);
+}
+function setMascotState(state,customMsg){
+  mascotState=state;
+  renderMascot();
+  const bubble=document.getElementById('mascotBubble');
+  bubble.textContent = customMsg || MASCOT_STATES[state].msg;
+  bubble.classList.add('show');
+  clearTimeout(window._mascotTimer);
+  window._mascotTimer=setTimeout(()=>bubble.classList.remove('show'), 3600);
+}
+function mascotClick(){
+  mascotClickCount++;
+  if(mascotState==='sleep'){ setMascotState('idle'); return; }
+  const cycle=['thinking','researching','analyzing','speaking'];
+  setMascotState(cycle[mascotClickCount%cycle.length]);
+  if(mascotClickCount%7===0) setMascotState('celebration',"You've explored a lot of research today!");
+}
+let idleTimer;
+function resetIdleTimer(){
+  clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>setMascotState('sleep'), 45000);
+}
+['click','keydown','mousemove'].forEach(ev=>document.addEventListener(ev,resetIdleTimer));
+
+/* =====================================================================
+   PAGE ROUTING
+===================================================================== */
+function goPage(p){
+  document.querySelectorAll('.tnav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  let el=document.getElementById('page-'+p);
+  if(!el){ renderPage(p); el=document.getElementById('page-'+p); }
+  el.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderPage(p){
+  const main=document.getElementById('appMain');
+  const div=document.createElement('div');
+  div.className='page'; div.id='page-'+p;
+  if(p==='exec') div.innerHTML=execPageHTML();
+  if(p==='research') div.innerHTML=researchPageHTML();
+  if(p==='opportunity') div.innerHTML=opportunityPageHTML();
+  if(p==='brain') div.innerHTML=brainPageHTML();
+  if(p==='news') div.innerHTML=newsPageHTML();
+  main.appendChild(div);
+  if(p==='research'){ renderResearch(currentTicker); initTVPanel(); }
+  if(p==='opportunity'){ renderScreener(screenerResults); renderOppGroups(); }
+  if(p==='brain'){ scrollChatBottom(); }
+  if(p==='news'){ renderNewsFeed(); }
+}
+
+function scoreColor(v){ return v>=75?'var(--ok)':v>=50?'var(--warn)':'var(--bad)'; }
+function ringSVG(val,color,size=64,stroke=6){
+  const r=(size-stroke)/2, c=2*Math.PI*r, off=c*(1-val/100);
+  return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"/></svg>`;
+}
+
+/* =====================================================================
+   EXECUTIVE DASHBOARD
+===================================================================== */
+function execPageHTML(){
+  const indices=[
+    {l:'NIFTY 50',v:'24,853',c:'+0.76%',up:true},{l:'SENSEX',v:'81,502',c:'+0.71%',up:true},
+    {l:'BANK NIFTY',v:'52,741',c:'+0.27%',up:true},{l:'INDIA VIX',v:'14.82',c:'-2.8%',up:false},
+    {l:'GOLD',v:'₹72,145',c:'+0.35%',up:true},{l:'USD/INR',v:'83.24',c:'+0.12%',up:true}
+  ];
+  return `
+  <div class="pg-head">
+    <div><span class="pg-eyebrow">Executive Dashboard</span><div class="pg-title">🏦 What should I monitor today?</div><div class="pg-sub">Research insights for investors, executives & portfolio owners</div></div>
+  </div>
+  <div class="disclaimer-strip"><b>Research Only.</b> MARKETO AI provides financial research and intelligence — not buy/sell recommendations. Users make their own investment decisions.</div>
+
+  <div class="grid g6" style="margin-bottom:18px">
+    ${indices.map(i=>`<div class="stat-card" style="border-top:2px solid ${i.up?'var(--ok)':'var(--bad)'}"><div class="stat-l">${i.l}</div><div class="stat-v">${i.v}</div><div class="stat-c" style="color:${i.up?'var(--ok)':'var(--bad)'}">${i.up?'▲':'▼'} ${i.c}</div></div>`).join('')}
+  </div>
+
+  <div class="grid gExecLayout">
+    <div class="grid" style="gap:16px">
+      <div class="grid g3">
+        <div class="card">
+          <div class="card-title">Market Sentiment</div>
+          <div style="font-size:22px;font-weight:800;color:var(--ok);font-family:var(--fd)">Constructive</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Based on breadth, FII/DII flow & volatility readings</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Market Breadth (NSE)</div>
+          <div style="display:flex;align-items:center;gap:14px">
+            ${ringSVG(68,'#00D084',60,6)}
+            <div style="font-size:11.5px;color:var(--text2)"><div style="color:var(--ok);font-weight:700">1,654 Advancing</div><div style="color:var(--bad)">687 Declining</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">FII / DII Flow (₹ Cr)</div>
+          <div style="font-size:18px;font-weight:800;font-family:var(--fd);color:var(--ok)">+2,340 / +1,125</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Net institutional buying, today</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="card-title-l">🧭 Sector Strength Snapshot</div></div>
+        <div class="sector-row"><span>Banking</span><span style="color:var(--ok)">▲ 2.31%</span></div>
+        <div class="sector-row"><span>IT</span><span style="color:var(--ok)">▲ 1.82%</span></div>
+        <div class="sector-row"><span>Pharma</span><span style="color:var(--ok)">▲ 1.46%</span></div>
+        <div class="sector-row"><span>FMCG</span><span style="color:var(--ok)">▲ 0.98%</span></div>
+        <div class="sector-row"><span>Auto</span><span style="color:var(--bad)">▼ 0.42%</span></div>
+        <div class="sector-row"><span>Realty</span><span style="color:var(--bad)">▼ 0.65%</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="card-title-l">⚡ Opportunity Radar</div><span style="font-size:10.5px;color:var(--muted);cursor:pointer" onclick="goPage('opportunity')">View all →</span></div>
+        <div class="grid g4">
+          ${['VINDHYATEL','TRIVENI','SBILIFE','INDIAMART'].map(t=>{
+            const c=SCREENER_UNIVERSE.find(x=>x.n===t);
+            return `<div class="opp-card" onclick="goPage('research');searchTicker('${t}')"><div class="opp-name">${t}</div><div class="opp-tag">${c.s}</div><div class="opp-score">Quality Score ${c.quality}</div></div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🤖 MARKETO AI Summary</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.7">Market breadth remains constructive with advancing issues outpacing decliners nearly 2.4:1. Institutional flows are net positive across both FII and DII categories today. Banking and IT are showing the strongest relative sector strength, while Auto and Realty lag. This is a market-wide research summary, not a trading signal.</div>
+      </div>
+    </div>
+
+    <div class="tv-panel">
+      ${tvPanelHTML()}
+    </div>
+  </div>
+  `;
+}
+
+/* =====================================================================
+   LIVE MARKET TV PANEL (mock / illustrative only)
+===================================================================== */
+function tvPanelHTML(){
+  return `
+  <div class="tv-card">
+    <div class="tv-head">
+      <div class="tv-head-title"><span class="live-dot"></span> Market TV</div>
+      <span style="font-size:9.5px;color:var(--muted)">Demo Feed</span>
+    </div>
+    <div class="tv-tabs" id="tvTabs">
+      ${TV_CHANNELS.map(c=>`<div class="tv-tab ${c.id===currentChannel?'active':''}" onclick="switchChannel('${c.id}')">${c.name}</div>`).join('')}
+    </div>
+    <div class="tv-player" id="tvPlayer"></div>
+    <div class="tv-ticker">📌 <b style="color:var(--text)">Market Alert:</b> <span id="tvHeadline"></span></div>
+  </div>
+  <div class="tv-card">
+    <div class="tv-head"><div class="tv-head-title">📰 News Bullets</div><span style="font-size:9.5px;color:var(--muted)">Updated 2m ago</span></div>
+    <div class="tv-news-list">
+      ${NEWS_FEED.slice(0,5).map(n=>`<div class="tv-news-item"><div class="tv-news-dot"></div><div><div class="tv-news-t">${n.t}</div><div class="tv-news-time">${n.time}</div></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+function initTVPanel(){ renderTVPlayer(); }
+function renderTVPlayer(){
+  const ch=TV_CHANNELS.find(c=>c.id===currentChannel);
+  const player=document.getElementById('tvPlayer');
+  if(!player) return;
+  player.innerHTML=`
+    <div class="tv-player-bg"></div>
+    <div class="tv-live-badge"><span class="live-dot"></span> LIVE</div>
+    <div class="tv-player-content">
+      <div class="tv-chan-logo" style="background:${ch.color}">${ch.name.split(' ').map(w=>w[0]).join('').slice(0,3)}</div>
+      <div class="tv-chan-name">${ch.name}</div>
+      <div class="tv-chan-sub">${ch.sub}</div>
+    </div>
+    <div class="tv-controls">
+      <div class="tv-ctrl-btn">⏸</div><div class="tv-ctrl-btn">🔊</div>
+      <div style="flex:1"></div>
+      <div class="tv-ctrl-btn">⛶</div>
+    </div>`;
+  const hl=document.getElementById('tvHeadline');
+  if(hl) hl.textContent=ch.headline;
+}
+function switchChannel(id){
+  currentChannel=id;
+  document.querySelectorAll('#tvTabs .tv-tab').forEach((el,i)=>el.classList.toggle('active',TV_CHANNELS[i].id===id));
+  renderTVPlayer();
+}
+
+/* =====================================================================
+   RESEARCH DASHBOARD
+===================================================================== */
+function researchPageHTML(){
+  return `
+  <div class="pg-head">
+    <div><span class="pg-eyebrow">Research Dashboard</span><div class="pg-title">🔍 Deep Company Research</div><div class="pg-sub">Search any covered company for a full research workspace</div></div>
+  </div>
+  <div class="disclaimer-strip"><b>Research Only.</b> Scores reflect business characteristics, not buy/sell recommendations or price targets.</div>
+  <div id="researchContent"></div>
+  `;
+}
+function searchTicker(t){
+  currentTicker=t;
+  if(!document.getElementById('page-research')) renderPage('research');
+  goPage('research');
+  renderResearch(t);
+}
+function renderResearch(ticker){
+  const d=COMPANIES[ticker];
+  const target=document.getElementById('researchContent');
+  if(!d||!target) return;
+  setMascotState('researching',`Pulling research on ${d.ticker}…`);
+  target.innerHTML=`
+  <div class="rsch-header">
+    <div class="rsch-logo" style="background:${d.color}33;color:${d.color};border:1px solid ${d.color}55">${d.logo}</div>
+    <div>
+      <div class="rsch-name">${d.name}</div>
+      <div class="rsch-sector">${d.sector} · ${d.ticker}</div>
+    </div>
+    <div class="rsch-stats">
+      <div><div class="rsch-stat-l">CMP</div><div class="rsch-stat-v">${d.cmp}</div></div>
+      <div><div class="rsch-stat-l">Change</div><div class="rsch-stat-v" style="color:${d.up?'var(--ok)':'var(--bad)'}">${d.chg}</div></div>
+      <div><div class="rsch-stat-l">Market Cap</div><div class="rsch-stat-v">${d.mcap}</div></div>
+      <div><div class="rsch-stat-l">P/E</div><div class="rsch-stat-v">${d.pe}</div></div>
+    </div>
+  </div>
+
+  <div class="score-grid">
+    ${scoreBox('Business Quality',d.scores.quality)}
+    ${scoreBox('Growth',d.scores.growth)}
+    ${scoreBox('Financial Health',d.scores.health)}
+    ${scoreBox('Management',d.scores.management)}
+    ${scoreBox('Risk',d.scores.risk,true)}
+  </div>
+
+  <div class="rsch-tabs" id="rschTabs">
+    ${['Overview','Financials','Management','Growth','Risk','SWOT','BCG Matrix','Technical Lab','News'].map((t,i)=>`<div class="rsch-tab ${i===0?'active':''}" data-i="${i}" onclick="switchRschTab(${i})">${t}</div>`).join('')}
+  </div>
+
+  <div class="rsch-pane active" id="rsch-0">${paneOverview(d)}</div>
+  <div class="rsch-pane" id="rsch-1">${paneFinancials(d)}</div>
+  <div class="rsch-pane" id="rsch-2">${paneManagement(d)}</div>
+  <div class="rsch-pane" id="rsch-3">${paneGrowth(d)}</div>
+  <div class="rsch-pane" id="rsch-4">${paneRisk(d)}</div>
+  <div class="rsch-pane" id="rsch-5">${paneSWOT(d)}</div>
+  <div class="rsch-pane" id="rsch-6">${paneBCG(d)}</div>
+  <div class="rsch-pane" id="rsch-7">${paneTechnical(d)}</div>
+  <div class="rsch-pane" id="rsch-8">${paneNews(d)}</div>
+  `;
+  setTimeout(()=>setMascotState('success',`Research summary ready for ${d.ticker}.`),650);
+}
+function scoreBox(label,val,inverse){
+  const color=inverse ? (val<=30?'var(--ok)':val<=55?'var(--warn)':'var(--bad)') : scoreColor(val);
+  return `<div class="score-box"><div class="score-box-label">${label}${inverse?' (Lower = Better)':''}</div><div class="score-box-val" style="color:${color}">${val}</div><div class="score-bar-track"><div class="score-bar-fill" style="width:${val}%;background:${color}"></div></div></div>`;
+}
+function switchRschTab(i){
+  document.querySelectorAll('#rschTabs .rsch-tab').forEach((el,idx)=>el.classList.toggle('active',idx===i));
+  document.querySelectorAll('.rsch-pane').forEach((el,idx)=>el.classList.toggle('active',idx===i));
+  if(i===5) setMascotState('analyzing','Mapping strengths, weaknesses, opportunities & threats…');
+  if(i===6) setMascotState('analyzing','Plotting BCG positioning…');
+}
+function paneOverview(d){
+  return `<div class="grid g2">
+    <div class="card"><div class="card-title">Business Model</div><div style="font-size:12.5px;color:var(--text2);line-height:1.65">${d.overview.business}</div></div>
+    <div class="card"><div class="card-title">Products & Services</div><ul class="bullet-list bl-o">${d.overview.products.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    <div class="card"><div class="card-title">Segment Mix</div><ul class="bullet-list bl-o">${d.overview.segments.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    <div class="card"><div class="card-title">Geography & Market Position</div><div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-bottom:10px">${d.overview.geography}</div><div style="font-size:12.5px;color:var(--text2);line-height:1.65">${d.overview.marketShare}</div></div>
+  </div>`;
+}
+function paneFinancials(d){
+  return `<div class="grid g2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">Quarterly P&L (₹ Cr)</div><div class="tbl-wrap" style="border:none"><table class="fin-tbl"><thead><tr><th>Quarter</th><th>Revenue</th><th>Net Profit</th><th>Margin</th></tr></thead><tbody>
+      ${d.financials.quarters.map(q=>`<tr><td>${q.q}</td><td>${q.rev.toLocaleString('en-IN')}</td><td>${q.profit.toLocaleString('en-IN')}</td><td>${q.margin}%</td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="card"><div class="card-title">Annual P&L (₹ Cr)</div><div class="tbl-wrap" style="border:none"><table class="fin-tbl"><thead><tr><th>Year</th><th>Revenue</th><th>Net Profit</th></tr></thead><tbody>
+      ${d.financials.annual.map(a=>`<tr><td>${a.y}</td><td>${a.rev.toLocaleString('en-IN')}</td><td>${a.profit.toLocaleString('en-IN')}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="card-title">Key Ratios</div>
+      <div class="ind-row"><span>ROE</span><span style="font-weight:700">${d.financials.ratios.roe}</span></div>
+      <div class="ind-row"><span>ROCE</span><span style="font-weight:700">${d.financials.ratios.roce}</span></div>
+      <div class="ind-row"><span>Debt Position</span><span style="font-weight:700">${d.financials.ratios.debt}</span></div>
+      <div class="ind-row"><span>Net Margin</span><span style="font-weight:700">${d.financials.ratios.margin}</span></div>
+      <div class="ind-row"><span>Cash Conversion</span><span style="font-weight:700;text-align:right;max-width:55%">${d.financials.ratios.cashConv}</span></div>
+    </div>
+    <div class="card"><div class="card-title">Balance Sheet Snapshot</div>
+      <div class="ind-row"><span>Cash / AUM</span><span style="font-weight:700">${d.financials.balanceSheet.cash}</span></div>
+      <div class="ind-row"><span>Borrowings</span><span style="font-weight:700">${d.financials.balanceSheet.borrowings}</span></div>
+      <div class="ind-row"><span>Net Worth</span><span style="font-weight:700">${d.financials.balanceSheet.networth}</span></div>
+    </div>
+  </div>`;
+}
+function paneManagement(d){
+  return `<div class="grid g2">
+    <div class="card"><div class="card-title">CEO Intelligence</div>
+      <div class="ceo-card"><div class="ceo-avatar">${d.logo}</div><div><div style="font-weight:700;font-size:13.5px">${d.management.ceo}</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Chief Executive</div></div></div>
+      <div style="margin-top:14px;font-size:12.5px;color:var(--text2);line-height:1.65">${d.management.vision}</div>
+    </div>
+    <div class="card"><div class="card-title">Leadership Team</div><ul class="bullet-list bl-o">${d.management.team.map(t=>`<li>${t}</li>`).join('')}</ul>
+      <div class="card-title" style="margin-top:18px">Earnings Call Commentary</div>
+      <div style="font-size:12.5px;color:var(--text2);line-height:1.65">${d.management.commentary}</div>
+    </div>
+  </div>`;
+}
+function paneGrowth(d){
+  return `<div class="grid g2">
+    <div class="card"><div class="card-title">Growth Intelligence</div><ul class="bullet-list bl-o">${d.growth.items.map(g=>`<li>${g}</li>`).join('')}</ul></div>
+    <div class="card"><div class="card-title">Capex Outlook</div><div style="font-size:12.5px;color:var(--text2);line-height:1.65">${d.growth.capex}</div></div>
+  </div>`;
+}
+function paneRisk(d){
+  return `<div class="grid g2">
+    <div class="card"><div class="card-title">⚠️ Promoter Risk</div><div style="font-size:12.5px;color:var(--text2);line-height:1.6">${d.risk.promoter}</div></div>
+    <div class="card"><div class="card-title">⚠️ Debt Risk</div><div style="font-size:12.5px;color:var(--text2);line-height:1.6">${d.risk.debt}</div></div>
+    <div class="card"><div class="card-title">⚠️ Competition Risk</div><div style="font-size:12.5px;color:var(--text2);line-height:1.6">${d.risk.competition}</div></div>
+    <div class="card"><div class="card-title">⚠️ Sector Risk</div><div style="font-size:12.5px;color:var(--text2);line-height:1.6">${d.risk.sector}</div></div>
+    <div class="card span2"><div class="card-title">⚠️ Execution Risk</div><div style="font-size:12.5px;color:var(--text2);line-height:1.6">${d.risk.execution}</div></div>
+  </div>`;
+}
+function paneSWOT(d){
+  return `<div class="grid g2">
+    <div class="swot-box" style="background:rgba(0,208,132,.04);border-color:rgba(0,208,132,.2)"><div class="swot-head" style="color:var(--ok)">💪 Strengths</div><ul class="bullet-list bl-s">${d.swot.s.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="swot-box" style="background:rgba(255,176,32,.04);border-color:rgba(255,176,32,.2)"><div class="swot-head" style="color:var(--warn)">⚠️ Weaknesses</div><ul class="bullet-list bl-w">${d.swot.w.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="swot-box" style="background:rgba(0,194,255,.04);border-color:rgba(0,194,255,.2)"><div class="swot-head" style="color:var(--cyan)">🚀 Opportunities</div><ul class="bullet-list bl-o">${d.swot.o.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="swot-box" style="background:rgba(255,77,94,.04);border-color:rgba(255,77,94,.2)"><div class="swot-head" style="color:var(--bad)">🔻 Threats</div><ul class="bullet-list bl-t">${d.swot.t.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+  </div>`;
+}
+function paneBCG(d){
+  const x = 50+(d.bcg.relativeShare-50)*0.9, y = 100-(d.bcg.marketGrowth);
+  return `<div class="grid g2">
+    <div class="card">
+      <div class="card-title">BCG Matrix Positioning</div>
+      <div class="bcg-matrix">
+        <div class="bcg-quad" style="top:0;left:0">⭐ Stars</div>
+        <div class="bcg-quad" style="top:0;left:50%">❓ Question Marks</div>
+        <div class="bcg-quad" style="top:50%;left:0">🐄 Cash Cows</div>
+        <div class="bcg-quad" style="top:50%;left:50%">🐕 Dogs</div>
+        <div class="bcg-dot" style="left:${x}%;top:${y}%" title="${d.ticker}">${d.logo}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:8px"><span>← Low Relative Market Share</span><span>High →</span></div>
+    </div>
+    <div class="card"><div class="card-title">Positioning: ${d.bcg.quadrant}</div><div style="font-size:12.5px;color:var(--text2);line-height:1.7">${d.bcg.note}</div>
+      <div class="ind-row" style="margin-top:14px"><span>Market Growth Indicator</span><span style="font-weight:700">${d.bcg.marketGrowth}/100</span></div>
+      <div class="ind-row"><span>Relative Market Share</span><span style="font-weight:700">${d.bcg.relativeShare}/100</span></div>
+    </div>
+  </div>`;
+}
+function paneTechnical(d){
+  return `<div class="grid g2">
+    <div class="card">
+      <div class="card-title">Price Chart — ${d.ticker}</div>
+      <div class="tf-tabs">${['1D','1W','1M','3M','6M','1Y','3Y','5Y','MAX'].map((tf,i)=>`<div class="tf-tab ${i===2?'active':''}" onclick="event.target.parentNode.querySelectorAll('.tf-tab').forEach(e=>e.classList.remove('active'));event.target.classList.add('active')">${tf}</div>`).join('')}</div>
+      <div class="tech-mini-chart">📈 Illustrative price chart — ${d.cmp} (mock data)</div>
+      <div class="ind-row"><span>Support</span><span style="font-weight:700;color:var(--ok)">${d.technical.support}</span></div>
+      <div class="ind-row"><span>Resistance</span><span style="font-weight:700;color:var(--bad)">${d.technical.resistance}</span></div>
+      <div class="ind-row"><span>Trend Structure</span><span style="font-weight:700">${d.technical.trend}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Technical Indicators</div>
+      <div class="ind-row"><span>RSI (14)</span><span style="font-weight:700;color:${d.technical.rsi>70?'var(--bad)':d.technical.rsi<30?'var(--ok)':'var(--text)'}">${d.technical.rsi}</span></div>
+      <div class="ind-row"><span>MACD</span><span style="font-weight:700">Signal line crossover — illustrative</span></div>
+      <div class="ind-row"><span>50 DMA</span><span style="font-weight:700">Above</span></div>
+      <div class="ind-row"><span>200 DMA</span><span style="font-weight:700">Above</span></div>
+      <div class="ind-row"><span>Bollinger Bands</span><span style="font-weight:700">Mid-band</span></div>
+      <div class="ind-row"><span>Volume Profile</span><span style="font-weight:700">In-line with average</span></div>
+    </div>
+  </div>`;
+}
+function paneNews(d){
+  return `<div class="card">${d.news.map(n=>`<div class="news-item"><span class="news-cat" style="background:rgba(0,194,255,.1);color:var(--cyan)">${n.tag}</span><div class="news-body"><div class="news-title">${n.t}</div><div class="news-meta"><span>${n.time}</span></div></div></div>`).join('')}</div>`;
+}
+
+/* =====================================================================
+   OPPORTUNITY DASHBOARD
+===================================================================== */
+function opportunityPageHTML(){
+  return `
+  <div class="pg-head">
+    <div><span class="pg-eyebrow">Opportunity Dashboard</span><div class="pg-title">⚡ Find Companies Matching Criteria</div><div class="pg-sub">Screen, filter, and explore the research universe</div></div>
+  </div>
+  <div class="disclaimer-strip"><b>Research observations only.</b> No trading signals. Filters surface companies by fundamental and technical characteristics for further research.</div>
+
+  <div id="oppGroupsRoot" style="margin-bottom:22px"></div>
+
+  <div style="font-family:var(--fd);font-size:15px;font-weight:700;margin-bottom:12px">🔬 AI Screener</div>
+  <div class="screen-layout">
+    <div class="filter-panel">
+      <div class="fp-title">⚙️ Filters</div>
+      <div class="fgroup">
+        <div class="flabel">Fundamentals</div>
+        <div class="frow"><label>Max PE</label><input class="finput" id="maxPE" type="number" placeholder="e.g. 40"></div>
+        <div class="frow"><label>Min ROE%</label><input class="finput" id="minROE" type="number" placeholder="e.g. 15"></div>
+        <div class="frow"><label>Min ROCE%</label><input class="finput" id="minROCE" type="number" placeholder="e.g. 15"></div>
+        <div class="frow"><label>Rev Gr%</label><input class="finput" id="minRevG" type="number" placeholder="e.g. 10"></div>
+        <div class="frow"><label>Div Yld%</label><input class="finput" id="minDivY" type="number" placeholder="e.g. 1"></div>
+      </div>
+      <div class="fgroup">
+        <div class="flabel">Holding</div>
+        <div class="frow"><label>Promoter%</label><input class="finput" id="minProm" type="number" placeholder="min %"></div>
+        <div class="frow"><label>FII%</label><input class="finput" id="minFII" type="number" placeholder="min %"></div>
+      </div>
+      <div class="fgroup">
+        <div class="flabel">Research Scores</div>
+        <div class="frow"><label>Quality</label><input class="finput" id="minQuality" type="number" placeholder="min"></div>
+        <div class="frow"><label>Growth</label><input class="finput" id="minGrowth" type="number" placeholder="min"></div>
+        <div class="frow"><label>Health</label><input class="finput" id="minHealth" type="number" placeholder="min"></div>
+      </div>
+      <div class="fgroup">
+        <div class="flabel">Quick Presets</div>
+        <button class="preset" onclick="loadPreset('quality')">🏆 High Business Quality</button>
+        <button class="preset" onclick="loadPreset('growth')">🚀 High Growth Profile</button>
+        <button class="preset" onclick="loadPreset('value')">💎 Low Valuation</button>
+        <button class="preset" onclick="loadPreset('dividend')">💰 Income Focus</button>
+        <button class="preset" onclick="loadPreset('lowrisk')">🛡️ Lower Risk Profile</button>
+      </div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:4px" onclick="runScreen()">🔍 Run Screen</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="clearFilters()">Clear All</button>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-family:var(--fd);font-size:14px;font-weight:700">Screening Results</div>
+        <div style="font-size:12px;color:var(--muted)" id="rCount"></div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="stbl">
+          <thead><tr>
+            <th onclick="sortTable('n')">Company</th><th onclick="sortTable('pe')">PE</th><th onclick="sortTable('roe')">ROE%</th>
+            <th onclick="sortTable('revG')">Rev Gr%</th><th onclick="sortTable('divY')">Div Y%</th>
+            <th onclick="sortTable('quality')">Quality</th><th onclick="sortTable('growth')">Growth</th><th onclick="sortTable('health')">Health</th><th onclick="sortTable('risk')">Risk</th>
+          </tr></thead>
+          <tbody id="screenBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-family:var(--fd);font-size:15px;font-weight:700;margin:28px 0 12px">📐 Technical Lab™</div>
+  <div class="card">
+    <div class="tf-tabs">${['1D','1W','1M','3M','6M','1Y','3Y','5Y','MAX'].map((tf,i)=>`<div class="tf-tab ${i===2?'active':''}" onclick="event.target.parentNode.querySelectorAll('.tf-tab').forEach(e=>e.classList.remove('active'));event.target.classList.add('active')">${tf}</div>`).join('')}</div>
+    <div class="grid g4" style="margin-top:14px">
+      ${['RSI','MACD','ADX','Supertrend'].map(ind=>`<div class="stat-card"><div class="stat-l">${ind}</div><div class="stat-v" style="font-size:16px">Illustrative</div></div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px">Select a company in the Research Dashboard for ticker-specific indicator readings (RSI, MACD, EMA, SMA, VWAP, ADX, Bollinger Bands, Supertrend, Fibonacci, Volume Profile).</div>
+  </div>
+  `;
+}
+function renderOppGroups(){
+  const root=document.getElementById('oppGroupsRoot');
+  if(!root) return;
+  const tabs=Object.keys(OPPORTUNITY_GROUPS);
+  root.innerHTML=`
+    <div class="opp-tabs" id="oppTabs">${tabs.map((k,i)=>`<div class="opp-tab-btn ${i===0?'active':''}" data-k="${k}" onclick="showOppGroup('${k}')">${OPPORTUNITY_GROUPS[k].label}</div>`).join('')}</div>
+    <div id="oppGroupBody"></div>`;
+  showOppGroup(tabs[0]);
+}
+function showOppGroup(k){
+  document.querySelectorAll('#oppTabs .opp-tab-btn').forEach(el=>el.classList.toggle('active',el.dataset.k===k));
+  const g=OPPORTUNITY_GROUPS[k];
+  const body=document.getElementById('oppGroupBody');
+  body.innerHTML=`<div class="card"><div style="font-size:11.5px;color:var(--muted);margin-bottom:12px">${g.note}</div>
+    <div class="grid g5">
+    ${g.tickers.map(t=>{
+      const c=SCREENER_UNIVERSE.find(x=>x.n===t)||{};
+      return `<div class="opp-card" onclick="searchTicker('${t}')"><div class="opp-name">${t}</div><div class="opp-tag">${c.s||''}</div><div class="opp-score">Quality ${c.quality||'—'}</div></div>`;
+    }).join('')}
+    </div></div>`;
+}
+function renderScreener(rows){
+  document.getElementById('rCount').textContent=rows.length+' companies found';
+  document.getElementById('screenBody').innerHTML=rows.map(s=>`<tr>
+    <td style="font-weight:700;cursor:pointer;color:var(--cyan)" onclick="searchTicker('${s.n}')">${s.n}<div style="font-size:9.5px;color:var(--muted);font-weight:400">${s.s}</div></td>
+    <td>${s.pe}x</td>
+    <td style="color:${s.roe>=20?'var(--ok)':'var(--text)'}">${s.roe}%</td>
+    <td style="color:${s.revG>=15?'var(--ok)':'var(--text)'}">${s.revG}%</td>
+    <td>${s.divY}%</td>
+    <td><span class="score-chip" style="background:rgba(0,208,132,.1);color:${scoreColor(s.quality)}">${s.quality}</span></td>
+    <td><span class="score-chip" style="background:rgba(0,208,132,.1);color:${scoreColor(s.growth)}">${s.growth}</span></td>
+    <td><span class="score-chip" style="background:rgba(0,208,132,.1);color:${scoreColor(s.health)}">${s.health}</span></td>
+    <td><span class="score-chip" style="background:rgba(255,77,94,.08);color:${s.risk<=30?'var(--ok)':s.risk<=45?'var(--warn)':'var(--bad)'}">${s.risk}</span></td>
+  </tr>`).join('');
+}
+function runScreen(){
+  const v=id=>parseFloat(document.getElementById(id).value);
+  const maxPE=v('maxPE')||999, minROE=v('minROE')||0, minROCE=v('minROCE')||0, minRevG=v('minRevG')||0, minDivY=v('minDivY')||0;
+  const minProm=v('minProm')||0, minFII=v('minFII')||0, minQuality=v('minQuality')||0, minGrowth=v('minGrowth')||0, minHealth=v('minHealth')||0;
+  screenerResults=SCREENER_UNIVERSE.filter(s=>s.pe<=maxPE&&s.roe>=minROE&&s.roce>=minROCE&&s.revG>=minRevG&&s.divY>=minDivY&&(s.promHold||0)>=minProm&&s.fiiHold>=minFII&&s.quality>=minQuality&&s.growth>=minGrowth&&s.health>=minHealth);
+  renderScreener(screenerResults);
+  setMascotState('analyzing',`${screenerResults.length} companies match your filters.`);
+}
+function clearFilters(){
+  ['maxPE','minROE','minROCE','minRevG','minDivY','minProm','minFII','minQuality','minGrowth','minHealth'].forEach(id=>document.getElementById(id).value='');
+  screenerResults=[...SCREENER_UNIVERSE]; renderScreener(screenerResults);
+}
+const PRESETS={
+  quality:{minQuality:78},
+  growth:{minGrowth:70},
+  value:{maxPE:22},
+  dividend:{minDivY:1.0},
+  lowrisk:{minHealth:75}
+};
+function loadPreset(p){
+  clearFilters();
+  const pr=PRESETS[p];
+  Object.keys(pr).forEach(k=>document.getElementById(k).value=pr[k]);
+  runScreen();
+}
+function sortTable(key){
+  if(sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+  screenerResults.sort((a,b)=>{
+    if(typeof a[key]==='string') return a[key].localeCompare(b[key])*sortDir;
+    return (a[key]-b[key])*sortDir;
+  });
+  renderScreener(screenerResults);
+}
+
+/* =====================================================================
+   MARKETO BRAIN™
+===================================================================== */
+const BRAIN_CAPS=['🏢 Company Research','📰 News Analysis','📊 Financial Summary','📐 Technical Summary','💼 Portfolio Explanation','⚠️ Risk Explanation','⚖️ Sector Comparison'];
+let chatHistory=[{role:'ai',text:"Hi, I'm <b>MARKETO Brain™</b>. Ask me to research a company — for example, <i>\"Analyze INDIAMART\"</i> — and I'll pull together a company overview, financial trends, management insights, news summary, SWOT, BCG positioning, and risk assessment. I provide research, not investment advice."}];
+function brainPageHTML(){
+  return `
+  <div class="pg-head">
+    <div><span class="pg-eyebrow">MARKETO Brain™</span><div class="pg-title">🧠 Your Research Assistant</div><div class="pg-sub">Ask about any covered company, sector, or research concept</div></div>
+  </div>
+  <div class="brain-layout">
+    <div class="brain-side">
+      <div class="card">
+        <div class="card-title">Capabilities</div>
+        <div class="brain-cap-list">${BRAIN_CAPS.map(c=>`<div class="brain-cap-item">${c}</div>`).join('')}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Powered By</div>
+        <div style="font-size:11.5px;color:var(--text2);line-height:1.7">Company research engine · News analysis layer · Financial summary engine · Technical summary engine · Sector comparison engine</div>
+      </div>
+    </div>
+    <div class="chat-window">
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="chat-suggest">
+        ${['Analyze INDIAMART','Compare TCS vs HDFCBANK','Explain SBILIFE risk profile','What is a BCG Matrix?'].map(s=>`<div class="chat-chip" onclick="sendChip('${s}')">${s}</div>`).join('')}
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" placeholder="Ask Marketo Brain™ to analyze a company…" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-gold" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+function renderChat(){
+  document.getElementById('chatMsgs').innerHTML=chatHistory.map(m=>`<div class="chat-msg ${m.role==='user'?'user':'ai'}">${m.text}</div>`).join('');
+  scrollChatBottom();
+}
+function scrollChatBottom(){
+  const el=document.getElementById('chatMsgs');
+  if(el) el.scrollTop=el.scrollHeight;
+}
+function sendChip(text){ document.getElementById('chatInput').value=text; sendChat(); }
+function sendChat(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();
+  if(!text) return;
+  chatHistory.push({role:'user',text});
+  renderChat();
+  input.value='';
+  setMascotState('thinking');
+  setTimeout(()=>{
+    chatHistory.push({role:'ai',text:brainRespond(text)});
+    renderChat();
+    setMascotState('speaking');
+  },650);
+}
+function brainRespond(q){
+  const upper=q.toUpperCase();
+  const found=Object.keys(COMPANIES).find(t=>upper.includes(t));
+  if(found){
+    const d=COMPANIES[found];
+    return `<b>${d.name} — Research Summary</b><br><br>
+    <b>Overview:</b> ${d.overview.business}<br><br>
+    <b>Financial Trend:</b> Revenue and profit have shown a steady multi-quarter trajectory; ROE stands at ${d.financials.ratios.roe} with ${d.financials.ratios.debt.toLowerCase()}.<br><br>
+    <b>Management:</b> ${d.management.vision}<br><br>
+    <b>SWOT Snapshot:</b> Key strength — ${d.swot.s[0]}. Key risk — ${d.swot.t[0]}.<br><br>
+    <b>Research Scores:</b> Quality ${d.scores.quality} · Growth ${d.scores.growth} · Health ${d.scores.health} · Management ${d.scores.management} · Risk ${d.scores.risk}<br><br>
+    <i>This is a research summary based on illustrative data, not investment advice. View the full workspace in the Research Dashboard.</i> <span style="color:var(--cyan);cursor:pointer" onclick="goPage('research');searchTicker('${found}')">Open ${found} →</span>`;
+  }
+  if(upper.includes('COMPARE')){
+    const tickers=Object.keys(COMPANIES).filter(t=>upper.includes(t));
+    if(tickers.length>=2){
+      const [a,b]=tickers;
+      const da=COMPANIES[a], db=COMPANIES[b];
+      return `<b>${a} vs ${b} — Research Comparison</b><br><br>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <tr><td style="padding:4px 0;color:var(--muted)">Quality</td><td>${da.scores.quality}</td><td>${db.scores.quality}</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted)">Growth</td><td>${da.scores.growth}</td><td>${db.scores.growth}</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted)">Health</td><td>${da.scores.health}</td><td>${db.scores.health}</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted)">Risk</td><td>${da.scores.risk}</td><td>${db.scores.risk}</td></tr>
+      </table><br><i>Comparison reflects research scores only, not a recommendation to prefer one over the other.</i>`;
+    }
+  }
+  if(upper.includes('BCG')){
+    return `<b>BCG Matrix — Quick Explainer</b><br><br>The BCG Matrix classifies a business along two axes: relative market share (x-axis) and market growth rate (y-axis), producing four quadrants — <b>Stars</b> (high share, high growth), <b>Cash Cows</b> (high share, low growth), <b>Question Marks</b> (low share, high growth), and <b>Dogs</b> (low share, low growth). Each covered company in MARKETO AI has a BCG positioning available in its Research Dashboard tab.`;
+  }
+  if(upper.includes('RISK')){
+    return `MARKETO Brain™ evaluates risk across five dimensions for any covered company: promoter risk, debt risk, competition risk, sector risk, and execution risk. Try asking <i>"Explain [TICKER] risk profile"</i> with a specific company name, e.g. SBILIFE, TCS, RELIANCE, INDIAMART, or HDFCBANK.`;
+  }
+  return `I can help research INDIAMART, RELIANCE, TCS, HDFCBANK, or SBILIFE — try asking me to "Analyze [company]", "Compare [A] vs [B]", or ask about a research concept like SWOT or BCG Matrix.`;
+}
+
+/* =====================================================================
+   NEWS INTELLIGENCE
+===================================================================== */
+function newsPageHTML(){
+  return `
+  <div class="pg-head">
+    <div><span class="pg-eyebrow">News Intelligence</span><div class="pg-title">📰 Market News Feed</div><div class="pg-sub">Breaking news, results, corporate actions, and flow data</div></div>
+  </div>
+  <div class="disclaimer-strip"><b>Research Only.</b> Summaries explain what happened and possible impact — not investment advice.</div>
+  <div class="grid g3" style="margin-bottom:18px">
+    <div class="card"><div class="card-title">Sentiment Mix</div><div style="font-size:12px;color:var(--text2)">Positive: <b style="color:var(--ok)">5</b> · Neutral: <b style="color:var(--muted)">3</b> · Negative: <b style="color:var(--bad)">0</b></div></div>
+    <div class="card"><div class="card-title">Top Impacted</div><div style="font-size:12px;color:var(--text2)">TCS, SBILIFE, HDFCBANK, INDIAMART</div></div>
+    <div class="card"><div class="card-title">Categories Tracked</div><div style="font-size:12px;color:var(--text2)">Breaking · Results · FII/DII · Corporate Actions · Sector · Policy · Bulk Deals</div></div>
+  </div>
+  <div class="card" id="newsFeedRoot"></div>
+  `;
+}
+function renderNewsFeed(){
+  const root=document.getElementById('newsFeedRoot');
+  if(!root) return;
+  const catColor={Breaking:'var(--bad)',Results:'var(--ok)','FII/DII':'var(--cyan)','Corporate Actions':'var(--gold)',Sector:'var(--cyan)','Government Policy':'var(--warn)','Bulk Deals':'var(--muted)'};
+  const sentClass={Positive:'sent-pos',Negative:'sent-neg',Neutral:'sent-neu'};
+  root.innerHTML=NEWS_FEED.map(n=>`<div class="news-item">
+    <span class="news-cat" style="background:${catColor[n.cat]}1A;color:${catColor[n.cat]}">${n.cat}</span>
+    <div class="news-body">
+      <div class="news-title">${n.t}</div>
+      <div class="news-meta"><span>${n.time}</span><span>Impact: ${n.impact}</span><span class="${sentClass[n.sentiment]}">${n.sentiment}</span></div>
+    </div>
+  </div>`).join('');
+}
+
+/* =====================================================================
+   GLOBAL SEARCH
+===================================================================== */
+const SEARCHABLE=[
+  ...Object.values(COMPANIES).map(c=>({type:'Company',label:c.ticker,meta:c.name,action:()=>searchTicker(c.ticker)})),
+  ...SCREENER_UNIVERSE.filter(s=>!COMPANIES[s.n]).map(s=>({type:'Company',label:s.n,meta:s.s,action:()=>{
+    // Generic fallback for screener-only tickers without full research data
+    goPage('opportunity');
+  }})),
+  {type:'Sector',label:'IT Services',meta:'TCS, WIPRO, ZENTEC',action:()=>goPage('opportunity')},
+  {type:'Sector',label:'Insurance',meta:'SBILIFE, HDFCLIFE, ICICIGI',action:()=>goPage('opportunity')},
+  {type:'Sector',label:'Banking',meta:'HDFCBANK',action:()=>goPage('opportunity')},
+  {type:'Theme',label:'Defence Stocks',meta:'Thematic screen',action:()=>goPage('opportunity')},
+  {type:'Theme',label:'EV Sector',meta:'Thematic screen',action:()=>goPage('opportunity')},
+  {type:'CEO',label:'Dinesh Agarwal',meta:'CEO, IndiaMART',action:()=>searchTicker('INDIAMART')},
+  {type:'CEO',label:'Mukesh Ambani',meta:'Chairman, Reliance Industries',action:()=>searchTicker('RELIANCE')},
+  {type:'CEO',label:'K Krithivasan',meta:'CEO, TCS',action:()=>searchTicker('TCS')}
+];
+const searchInput=document.getElementById('globalSearch');
+const searchResultsEl=document.getElementById('gsearchResults');
+searchInput.addEventListener('input',()=>{
+  const q=searchInput.value.trim().toLowerCase();
+  if(!q){ searchResultsEl.classList.remove('show'); return; }
+  const matches=SEARCHABLE.filter(s=>s.label.toLowerCase().includes(q)||s.meta.toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length){ searchResultsEl.innerHTML=`<div class="gsr-item"><span class="gsr-meta">No matches in covered universe</span></div>`; searchResultsEl.classList.add('show'); return; }
+  searchResultsEl.innerHTML=matches.map((m,i)=>`<div class="gsr-item" data-i="${i}"><div><div class="gsr-name">${m.label}</div><div class="gsr-meta">${m.meta}</div></div><span class="gsr-tag">${m.type}</span></div>`).join('');
+  searchResultsEl.classList.add('show');
+  Array.from(searchResultsEl.children).forEach((el,i)=>el.addEventListener('click',()=>{ matches[i].action(); searchResultsEl.classList.remove('show'); searchInput.value=''; }));
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.gsearch-wrap')) searchResultsEl.classList.remove('show'); });
+document.addEventListener('keydown',e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); searchInput.focus(); } });
+
+/* =====================================================================
+   INIT
+===================================================================== */
+renderMascot();
+resetIdleTimer();
+goPage('exec');
+</script>
+</body>
+</html>
