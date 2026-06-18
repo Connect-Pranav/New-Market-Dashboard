@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MARKETO AI™ — Financial Research Operating System</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060A14;--bg2:#0A0F1E;--panel:#0D1326;--panel2:#121A33;
+  --blue:#0066FF;--cyan:#00C2FF;--gold:#F5B700;--gold2:#FFD54A;
+  --ok:#00D084;--bad:#FF4D5E;--warn:#FFB020;
+  --text:#F1F3FA;--text2:#9AA3C2;--muted:#5C6588;
+  --bdr:rgba(0,140,255,.14);--bdr2:rgba(245,183,0,.22);--bdrcyan:rgba(0,194,255,.25);
+  --fd:'Space Grotesk','Inter',system-ui,sans-serif;--fb:'Inter','Segoe UI',system-ui,sans-serif;
+  --radius:14px;--sidebar-w:236px;--topbar-h:96px;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(ellipse 900px 500px at 15% -10%, rgba(0,102,255,.10), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(245,183,0,.07), transparent 55%),var(--bg)}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--blue);border-radius:3px}
+
+/* ============ TOPBAR ============ */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:700;background:rgba(6,10,20,.95);backdrop-filter:blur(22px) saturate(140%);border-bottom:1px solid var(--bdr)}
+.topbar-main{height:62px;display:flex;align-items:center;gap:16px;padding:0 22px}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--fd);font-size:16px;font-weight:800;flex-shrink:0;width:calc(var(--sidebar-w) - 22px)}
+.logo-mark{width:30px;height:30px;flex-shrink:0}
+.logo-text .ai{color:var(--gold)}
+.logo-sub{font-size:9px;color:var(--muted);font-weight:500;margin-top:1px}
+.gsearch-wrap{flex:1;max-width:620px;margin:0 auto;position:relative}
+.gsearch{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px 10px 38px;color:var(--text);font-size:13.5px;outline:none;font-family:inherit;transition:border-color .2s,background .2s}
+.gsearch:focus{border-color:var(--bdrcyan);background:rgba(255,255,255,.07)}
+.gsearch::placeholder{color:var(--muted)}
+.gsearch-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none}
+.gsearch-kbd{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--muted);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:5px;border:1px solid var(--bdr)}
+.gsearch-results{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--panel2);border:1px solid var(--bdrcyan);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden;display:none;z-index:800}
+.gsearch-results.show{display:block}
+.gsr-item{padding:11px 16px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04)}
+.gsr-item:last-child{border-bottom:none}
+.gsr-item:hover{background:rgba(0,194,255,.07)}
+.gsr-name{font-weight:700;color:var(--text)}
+.gsr-meta{font-size:10.5px;color:var(--muted)}
+.gsr-tag{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:5px;background:rgba(0,194,255,.1);color:var(--cyan)}
+.topbar-right{display:flex;align-items:center;gap:13px;flex-shrink:0}
+.rupee-pill{display:flex;align-items:center;gap:7px;background:rgba(245,183,0,.07);border:1px solid var(--bdr2);border-radius:20px;padding:5px 12px 5px 6px;font-size:11.5px;font-weight:700;color:var(--gold);cursor:pointer}
+.rupee-pill-icon{width:22px;height:22px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);position:relative;flex-shrink:0;cursor:pointer}
+.icon-btn:hover{border-color:var(--bdrcyan);color:var(--text)}
+.notif-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--bad);border:2px solid var(--bg)}
+.profile-chip{display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0}
+.profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:12px;flex-shrink:0}
+.profile-name{font-size:12px;font-weight:700;line-height:1.2}
+.profile-plan{font-size:9.5px;color:var(--gold);line-height:1.2}
+
+.ticker-strip{height:34px;display:flex;align-items:center;overflow:hidden;border-top:1px solid var(--bdr);background:rgba(255,255,255,.015)}
+.ticker-track{display:flex;gap:34px;white-space:nowrap;animation:tickerScroll 38s linear infinite;padding-left:22px}
+.ticker-item{font-size:11.5px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
+.ticker-item b{color:var(--text);font-weight:700}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ============ SIDEBAR ============ */
+.sidebar{position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);background:#080C18;border-right:1px solid var(--bdr);overflow-y:auto;z-index:600;padding:16px 0 14px;display:flex;flex-direction:column}
+.sb-group{padding:0 14px;margin-bottom:14px}
+.sb-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding:0 10px;margin-bottom:7px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;margin-bottom:1px}
+.sb-item:hover{background:rgba(0,140,255,.07);color:var(--text)}
+.sb-item.active{background:rgba(245,183,0,.1);color:var(--gold)}
+.sb-icon{width:16px;text-align:center;flex-shrink:0;font-size:12.5px}
+.sb-foot{margin-top:auto;padding:0 14px}
+.sb-mascot-dock{margin:6px 14px 4px;padding:16px 10px 14px;background:linear-gradient(165deg,rgba(245,183,0,.07),rgba(0,194,255,.04));border:1px solid var(--bdr2);border-radius:16px;text-align:center}
+.sb-mascot-svg-wrap{width:96px;height:118px;margin:0 auto 6px;cursor:pointer}
+.sb-mascot-name{font-family:var(--fd);font-weight:800;font-size:12.5px;color:var(--gold);letter-spacing:.3px}
+.sb-mascot-tag{font-size:9.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.sb-mascot-state-badge{display:inline-block;margin-top:6px;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:6px;background:rgba(0,194,255,.12);color:var(--cyan)}
+
+/* ============ LAYOUT ============ */
+.app-shell{padding-top:var(--topbar-h);padding-left:var(--sidebar-w);min-height:100vh}
+.main{max-width:1700px;margin:0 auto;padding:20px 24px 60px}
+.page{display:none}
+.page.active{display:block;animation:fadein .3s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.pg-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;gap:16px;flex-wrap:wrap}
+.pg-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);margin-bottom:5px;display:block}
+.pg-title{font-family:var(--fd);font-size:21px;font-weight:700;display:flex;align-items:center;gap:9px}
+.pg-sub{font-size:11.5px;color:var(--muted);margin-top:3px}
+.disclaimer-strip{font-size:10.5px;color:var(--muted);background:rgba(245,183,0,.05);border:1px solid rgba(245,183,0,.15);border-radius:8px;padding:7px 12px;margin-bottom:16px;display:flex;align-items:center;gap:7px}
+.disclaimer-strip b{color:var(--gold);font-weight:700}
+
+.card{background:var(--panel);border:1px solid var(--bdr);border-radius:var(--radius);padding:16px;transition:border-color .2s;position:relative}
+.card:hover{border-color:var(--bdrcyan)}
+.card-title{font-family:var(--fd);font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px;justify-content:space-between;text-transform:uppercase;letter-spacing:.3px}
+.card-link{font-size:10.5px;color:var(--cyan);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+.grid{display:grid;gap:14px}
+.g6{grid-template-columns:repeat(6,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.span2{grid-column:span 2}
+@media(max-width:1500px){.g6{grid-template-columns:repeat(3,1fr)}.g5{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(2,1fr)}}
+
+.stat-card{background:var(--panel);border:1px solid var(--bdr);border-radius:14px;padding:13px 15px}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.stat-v{font-size:clamp(14px,2vw,18px);font-weight:800;font-family:var(--fd);margin-bottom:4px}
+.stat-c{font-size:11px;font-weight:600}
+.gauge-wrap{display:flex;align-items:center;gap:10px;justify-content:center}
+.gauge-label{font-size:10px;color:var(--muted)}
+.score-ring-val{font-family:var(--fd);font-weight:800;font-size:16px}
+.heat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.heat-cell{border-radius:8px;padding:9px 8px;font-size:10.5px}
+.heat-cell .hl{font-weight:700;color:var(--text)}
+.heat-cell .hv{font-weight:800;font-family:var(--fd);font-size:12px;margin-top:2px}
+.bullet-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.bullet-list li{font-size:11.5px;color:var(--text2);line-height:1.5;padding-left:14px;position:relative}
+.bullet-list li::before{content:'';position:absolute;left:0;top:6px;width:5px;height:5px;border-radius:50%;background:var(--cyan)}
+.bl-s li::before{background:var(--ok)}.bl-w li::before{background:var(--warn)}.bl-o li::before{background:var(--cyan)}.bl-t li::before{background:var(--bad)}
+.news-row{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.news-row:last-child{border-bottom:none}
+.news-row-t{color:var(--text2);flex:1}
+.news-row-time{color:var(--muted);font-size:10px;flex-shrink:0}
+.ph-layout{display:flex;align-items:center;gap:16px}
+.ph-metrics{flex:1;display:flex;flex-direction:column;gap:7px}
+.ph-row{display:flex;justify-content:space-between;font-size:11.5px}
+.ph-row b{font-weight:800}
+.radar-wrap{display:flex;align-items:center;gap:16px}
+.radar-count{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--gold)}
+.radar-sub{font-size:11px;color:var(--muted)}
+
+/* Compact TV widget (Executive dashboard only) */
+.tv-widget{width:100%;max-width:320px;background:var(--panel);border:1px solid var(--bdr2);border-radius:12px;overflow:hidden}
+.tv-widget-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--bdr)}
+.tv-widget-title{font-family:var(--fd);font-size:10.5px;font-weight:700;display:flex;align-items:center;gap:5px;text-transform:uppercase}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--bad);box-shadow:0 0 7px var(--bad);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tv-widget-tabs{display:flex;gap:3px;padding:6px 7px;overflow-x:auto;border-bottom:1px solid var(--bdr)}
+.tv-tab{padding:4px 7px;font-size:9px;font-weight:700;border-radius:6px;color:var(--text2);cursor:pointer;white-space:nowrap;border:1px solid transparent}
+.tv-tab.active{background:rgba(245,183,0,.1);color:var(--gold);border-color:var(--bdr2)}
+.tv-widget-player{height:130px;background:linear-gradient(145deg,#0A1024,#060A14);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tv-widget-bg{position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,102,255,.12),rgba(245,183,0,.08));opacity:.7}
+.tv-widget-content{position:relative;z-index:2;text-align:center}
+.tv-chan-logo{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:10px;margin:0 auto 5px}
+.tv-chan-name{font-family:var(--fd);font-weight:700;font-size:11px}
+.tv-chan-sub{font-size:8.5px;color:var(--muted);margin-top:2px}
+.tv-live-badge{position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:4px;background:rgba(255,77,94,.15);border:1px solid rgba(255,77,94,.4);padding:2px 6px;border-radius:5px;font-size:8px;font-weight:800;color:var(--bad);z-index:3}
+.tv-widget-ticker{background:rgba(0,0,0,.35);padding:6px 9px;font-size:9px;color:var(--text2)}
+
+/* ============ RESEARCH DASHBOARD ============ */
+.rsch-search-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.rsch-search-input{flex:1;min-width:220px;background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:10px;padding:9px 14px;color:var(--text);font-size:12.5px;outline:none;font-family:inherit}
+.rsch-search-input:focus{border-color:var(--bdrcyan)}
+.rsch-name-block{font-family:var(--fd);font-weight:700;font-size:13.5px}
+.rsch-name-sub{font-size:10.5px;color:var(--muted)}
+.rsch-tabs{display:flex;gap:3px;margin-bottom:14px;flex-wrap:wrap;border-bottom:1px solid var(--bdr)}
+.rsch-tab{padding:8px 13px;font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.rsch-tab:hover{color:var(--text)}
+.rsch-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.rsch-pane{display:none}
+.rsch-pane.active{display:block;animation:fadein .25s ease}
+.ind-row{display:flex;justify-content:space-between;font-size:11.5px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.ind-row:last-child{border-bottom:none}
+.fin-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.fin-tbl th{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:7px 4px;text-align:left;border-bottom:1px solid var(--bdr)}
+.fin-tbl td{padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.04)}
+.fin-tbl tr:last-child td{border-bottom:none}
+.score-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:11px}
+.score-bar-label{width:108px;flex-shrink:0;color:var(--text2)}
+.score-bar-track{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px}
+.score-bar-val{width:34px;text-align:right;font-weight:800;font-family:var(--fd);flex-shrink:0}
+.swot-box{border-radius:12px;padding:14px;border:1px solid var(--bdr)}
+.swot-head{font-family:var(--fd);font-size:11.5px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.bcg-matrix-mini{position:relative;width:100%;aspect-ratio:1.4/1;background:var(--panel2);border-radius:10px;border:1px solid var(--bdr);overflow:hidden;margin-bottom:8px}
+.bcg-quad-mini{position:absolute;width:50%;height:50%;display:flex;align-items:flex-start;justify-content:flex-start;padding:7px;font-size:9px;font-weight:700;color:var(--muted)}
+.bcg-dot-mini{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 5px rgba(245,183,0,.18);transform:translate(-50%,-50%)}
+.bcg-axis-label{display:flex;justify-content:space-between;font-size:9px;color:var(--muted)}
+.tf-tabs{display:flex;gap:4px;margin-bottom:9px;flex-wrap:wrap}
+.tf-tab{padding:4px 9px;font-size:10px;font-weight:700;border-radius:6px;background:rgba(255,255,255,.04);color:var(--text2);cursor:pointer;border:1px solid transparent}
+.tf-tab.active{background:rgba(0,194,255,.1);color:var(--cyan);border-color:var(--bdrcyan)}
+.tech-mini-chart{height:78px;background:rgba(0,194,255,.04);border:1px dashed var(--bdrcyan);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--muted);margin-bottom:10px}
+.overall-score-band{margin-top:10px;background:rgba(245,183,0,.06);border:1px solid var(--bdr2);border-radius:9px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center}
+.overall-score-band b{font-family:var(--fd);font-size:15px;color:var(--gold)}
+.ceo-mini{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.ceo-mini-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:800;font-size:14px;flex-shrink:0}
+.ceo-mini-name{font-weight:700;font-size:12.5px}
+.btn-tag{padding:7px 13px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(245,183,0,.08);border:1px solid var(--bdr2);color:var(--gold);cursor:pointer}
+
+/* ============ OPPORTUNITY DASHBOARD ============ */
+.flabel{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px}
+.finput{background:rgba(255,255,255,.06);border:1px solid var(--bdr);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;width:100%;font-family:inherit}
+.finput:focus{border-color:var(--bdrcyan)}
+.filter-row{display:flex;gap:8px;margin-bottom:8px}
+.opp-pill{border-radius:10px;padding:10px;cursor:pointer;transition:all .15s;border:1px solid var(--bdr)}
+.opp-pill:hover{border-color:var(--bdrcyan)}
+.opp-pill-name{font-weight:700;font-size:11.5px}
+.opp-pill-count{font-size:10px;color:var(--muted);margin-top:2px}
+.stbl{width:100%;border-collapse:collapse;font-size:11px}
+.stbl th{font-size:9.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:8px 8px;text-align:left;border-bottom:1px solid var(--bdr);white-space:nowrap;cursor:pointer}
+.stbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.stbl tr:hover td{background:rgba(0,140,255,.03)}
+.score-chip{display:inline-flex;align-items:center;justify-content:center;min-width:28px;padding:2px 5px;border-radius:5px;font-size:9.5px;font-weight:800}
+.tbl-scroll{max-height:280px;overflow-y:auto}
+.scanner-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.scanner-tab-btn{padding:8px 14px;border-radius:9px;font-size:11.5px;font-weight:700;background:rgba(255,255,255,.03);border:1px solid var(--bdr);color:var(--text2);cursor:pointer}
+.scanner-tab-btn.active{background:rgba(245,183,0,.08);color:var(--gold);border-color:var(--bdr2)}
+.scanner-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.scanner-row:last-child{border-bottom:none}
+.scanner-row-name{font-weight:700;cursor:pointer;color:var(--cyan)}
+.scanner-row-note{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+/* ============ BRAIN CHAT ============ */
+.chat-window{display:flex;flex-direction:column;height:540px}
+.chat-msgs{flex:1;overflow-y:auto;padding:6px}
+.chat-msg{max-width:80%;font-size:12.5px;line-height:1.55;padding:10px 13px;border-radius:11px;margin-bottom:10px}
+.chat-msg.user{margin-left:auto;background:var(--blue);color:#fff}
+.chat-msg.ai{background:var(--panel2);border:1px solid var(--bdr);color:var(--text2)}
+.chat-suggest{display:flex;gap:7px;flex-wrap:wrap;padding:8px 0}
+.chat-chip{font-size:10.5px;padding:6px 10px;border-radius:7px;background:rgba(0,194,255,.06);border:1px solid var(--bdrcyan);color:var(--cyan);cursor:pointer}
+
+/* ============ MASCOT FLOATING BUBBLE ============ */
+.mascot-bubble-float{position:fixed;bottom:18px;left:calc(var(--sidebar-w) + 18px);background:var(--panel2);border:1px solid var(--bdrcyan);border-radius:12px;padding:9px 13px;font-size:11.5px;color:var(--text);max-width:240px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:none;z-index:650}
+.mascot-bubble-float.show{display:block;animation:fadein .3s ease}
+
+/* ============ MASCOT SVG ANIMATIONS (shared) ============ */
+@keyframes mFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.m-float{animation:mFloat 3.2s ease-in-out infinite;transform-origin:70px 90px}
+@keyframes mOrbitSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.m-orbit-spin{animation:mOrbitSpin 10s linear infinite}
+.m-orbit-ring{animation:mOrbitSpin 7s linear infinite;transform-origin:70px 55px}
+.m-ring-slow{animation:mOrbitSpin 16s linear infinite}
+.m-ring-fast{animation:mOrbitSpin 3.5s linear infinite}
+@keyframes mEyeFlicker{0%,90%,100%{opacity:1}93%{opacity:.2}96%{opacity:1}}
+.m-eye-flicker{animation:mEyeFlicker 4s ease-in-out infinite}
+@keyframes mCorePulse{0%,100%{opacity:.6;r:4}50%{opacity:1;r:5}}
+.m-core-pulse{animation:mCorePulse 1.8s ease-in-out infinite}
+@keyframes mParticleFloat{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:.9;transform:translateY(-4px)}}
+.m-particle{animation:mParticleFloat 3s ease-in-out infinite}
+@keyframes mGlowPulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.m-alert .rupee-mascot-svg{animation:mGlowPulse 0.9s ease-in-out infinite}
+@keyframes mChevronRise{0%{opacity:0;transform:translateY(4px)}30%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
+.m-chevron{animation:mChevronRise 1.5s ease-out infinite}
+
+/* ============ FOOTER ============ */
+.app-footer{border-top:1px solid var(--bdr);background:rgba(8,12,24,.7);padding:16px 26px;display:flex;align-items:center;justify-content:space-around;flex-wrap:wrap;gap:14px}
+.foot-item{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--muted)}
+.foot-item b{color:var(--text2);display:block;font-size:11px}
+.foot-icon{font-size:15px}
+
+@media(max-width:1100px){
+  .sidebar{display:none}
+  .app-shell{padding-left:0}
+  .logo{width:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <a href="#" class="logo" onclick="goPage('exec');return false">
+      <svg class="logo-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="15" fill="#0A1842" stroke="#F5B700" stroke-width="1.4"/>
+        <text x="16" y="22" font-family="Space Grotesk,sans-serif" font-size="17" font-weight="800" fill="#F5B700" text-anchor="middle">₹</text>
+        <circle cx="16" cy="16" r="11" fill="none" stroke="#00C2FF" stroke-width=".6" stroke-dasharray="2 3" opacity=".6"/>
+      </svg>
+      <div class="logo-text">MARKETO <span class="ai">AI™</span><div class="logo-sub">Your Financial Research Operating System</div></div>
+    </a>
+    <div class="gsearch-wrap">
+      <span class="gsearch-icon">⌕</span>
+      <input class="gsearch" id="globalSearch" placeholder="Search stocks, companies, sectors, themes, CEOs…" autocomplete="off">
+      <span class="gsearch-kbd">⌘K</span>
+      <div class="gsearch-results" id="gsearchResults"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="rupee-pill" onclick="goPage('brain')">
+        <svg class="rupee-pill-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1A1100" stroke="#F5B700" stroke-width="1"/><text x="12" y="16.5" font-family="Space Grotesk,sans-serif" font-size="11" font-weight="800" fill="#F5B700" text-anchor="middle">₹</text></svg>
+        MARKETO RUPEE™
+      </div>
+      <div class="icon-btn">🔔<span class="notif-dot"></span></div>
+      <div class="icon-btn">❓</div>
+      <div class="profile-chip"><div class="profile-avatar">PK</div><div><div class="profile-name">Pranav</div><div class="profile-plan">Premium Plan</div></div></div>
+    </div>
+  </div>
+  <div class="ticker-strip"><div class="ticker-track" id="tickerTrack"></div></div>
+</header>
+
+<aside class="sidebar">
+  <div class="sb-group">
+    <div class="sb-label">Main Menu</div>
+    <div class="sb-item active" data-page="exec" onclick="goPage('exec')"><span class="sb-icon">🏛️</span> Executive Dashboard</div>
+    <div class="sb-item" data-page="research" onclick="goPage('research')"><span class="sb-icon">🔍</span> Research Dashboard</div>
+    <div class="sb-item" data-page="opportunity" onclick="goPage('opportunity')"><span class="sb-icon">⚡</span> Opportunity Dashboard</div>
+  </div>
+  <div class="sb-group">
+    <div class="sb-label">Tools</div>
+    <div class="sb-item" onclick="goPage('opportunity')"><span class="sb-icon">🧮</span> AI Screener</div>
+    <div class="sb-item" onclick="goPage('opportunity')"><span class="sb-icon">🧭</span> Opportunity Finder</div>
+    <div class="sb-item" onclick="goPage('research')"><span class="sb-icon">📑</span> Deep Research</div>
+    <div class="sb-item" onclick="goPage('research');switchRschTabByName('Financials')"><span class="sb-icon">📊</span> Financial Analyzer</div>
+    <div class="sb-item" onclick="goPage('research');switchRschTabByName('Management')"><span class="sb-icon">👤</span> CEO Intelligence</div>
+    <div class="sb-item" onclick="goPage('research');switchRschTabByName('BCG Matrix')"><span class="sb-icon">🧩</span> BCG Matrix</div>
+    <div class="sb-item" onclick="goPage('exec')"><span class="sb-icon">🛰️</span> Risk Radar</div>
+    <div class="sb-item" onclick="goPage('news')"><span class="sb-icon">📰</span> News Intelligence</div>
+    <div class="sb-item" onclick="goPage('opportunity')"><span class="sb-icon">📐</span> Technical Lab</div>
+    <div class="sb-item" onclick="toast('Portfolio Tracker is part of the Phase 2 roadmap.')"><span class="sb-icon">💼</span> Portfolio</div>
+    <div class="sb-item" onclick="toast('Watchlist is part of the Phase 2 roadmap.')"><span class="sb-icon">⭐</span> Watchlist</div>
+    <div class="sb-item" onclick="toast('Settings is illustrative in this prototype.')"><span class="sb-icon">⚙️</span> Settings</div>
+  </div>
+
+  <div class="sb-mascot-dock">
+    <div class="sb-mascot-svg-wrap" id="sbMascot" onclick="mascotClick()"></div>
+    <div class="sb-mascot-name">MARKETO RUPEE™</div>
+    <div class="sb-mascot-tag">Your AI Financial Companion</div>
+    <div class="sb-mascot-state-badge" id="mascotStateBadge">Idle</div>
+  </div>
+
+  <div class="sb-foot">
+    <div class="sb-item" onclick="goPage('brain')"><span class="sb-icon">🧠</span> Marketo Brain™</div>
+  </div>
+</aside>
+
+<div class="app-shell">
+  <main class="main" id="appMain"></main>
+  <footer class="app-footer">
+    <div class="foot-item"><span class="foot-icon">📜</span><div><b>Disclaimer</b>Research. Analyze. Decide.</div></div>
+    <div class="foot-item"><span class="foot-icon">✅</span><div><b>No Investment Advice</b>We Provide Research</div></div>
+    <div class="foot-item"><span class="foot-icon">🗂️</span><div><b>Data is Illustrative</b>For Demo Purposes Only</div></div>
+    <div class="foot-item"><span class="foot-icon">🛡️</span><div><b>Do Your Own Research</b>Invest Responsibly</div></div>
+    <div class="foot-item"><span class="foot-icon">₹</span><div><b>MARKETO AI™</b>All rights reserved</div></div>
+  </footer>
+</div>
+
+<div class="mascot-bubble-float" id="mascotBubble"></div>
+
+<script src="data.js"></script>
+<script src="mascot.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
